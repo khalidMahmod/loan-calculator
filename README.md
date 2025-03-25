@@ -39,8 +39,8 @@ This Real Estate Calculator Suite is designed to help property agents and buyers
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/username/real-estate-calculator.git
-cd real-estate-calculator
+git clone [https://github.com/username/real-estate-calculator.git](https://github.com/khalidMahmod/loan-calculator.git)
+cd loan-calculator
 ```
 
 ### Install Dependencies
