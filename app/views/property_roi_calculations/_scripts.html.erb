@@ -1,0 +1,1854 @@
+<!-- app/views/property_roi_calculations/_scripts.html.erb -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-gauge@0.3.0/dist/chartjs-gauge.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Chart instances
+    let expenseChart;
+    let projectionChart;
+    let cashOnCashGauge;
+    let totalRoiGauge;
+    let rentalGrowthChart;
+    let investmentBreakdownChart;
+    let incomeBreakdownChart;
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+      form.addEventListener('submit', event => {
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    });
+    
+    // Initialize UI elements
+    initCurrencyToggle();
+    initSliders();
+    initCharts();
+    initMetricsToggle();
+    initBreakdownButtons();
+    initChartViewToggle();
+
+    function directNavigateToTab(targetTabId) {
+      console.log("Navigating to tab:", targetTabId);
+      
+      // Find and click the tab button
+      const tabButton = document.querySelector(`button[data-bs-target="#${targetTabId}"]`);
+      if (tabButton) {
+        // Hide quick metrics on projections tab
+        const quickMetricsCard = document.getElementById('quick-metrics-card');
+        if (targetTabId === 'projections') {
+          quickMetricsCard.style.display = 'none';
+        } else {
+          quickMetricsCard.style.display = 'block';
+        }
+        
+        // Activate the clicked tab
+        const triggerTabList = document.querySelectorAll('#calculatorTabs button');
+        triggerTabList.forEach(t => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        tabButton.classList.add('active');
+        tabButton.setAttribute('aria-selected', 'true');
+        
+        // Show the associated tab pane with animation
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+          pane.classList.remove('show', 'active');
+        });
+        const tabPane = document.getElementById(targetTabId);
+        tabPane.classList.add('show', 'active');
+        
+        // Update progress steps
+        updateProgressSteps(targetTabId);
+        
+        // Update charts if navigating to projections or expenses tab
+        if (targetTabId === 'projections') {
+          updateProjectionCharts();
+        }
+        if (targetTabId === 'expenses') {
+          updateExpenseCharts();
+        }
+        if (targetTabId === 'income') {
+          updateRentalGrowthChart();
+        }
+      }
+    }
+
+    // Add direct click handlers to the next-tab buttons
+    document.querySelectorAll('.next-tab').forEach(button => {
+      button.addEventListener('click', function() {
+        console.log("Next tab button clicked");
+        const currentTab = this.closest('.tab-pane');
+        const currentTabId = currentTab.id;
+        
+        // Validate all required fields in the current tab
+        const requiredFields = currentTab.querySelectorAll('input[required], select[required]');
+        let allValid = true;
+        
+        requiredFields.forEach(field => {
+          if (!field.checkValidity()) {
+            allValid = false;
+            field.reportValidity(); // Show validation error
+          }
+        });
+        
+        // Only proceed if all required fields in this tab are valid
+        if (allValid) {
+          // Find the next tab ID
+          const tabIds = ['property', 'income', 'expenses', 'projections'];
+          const currentIndex = tabIds.indexOf(currentTabId);
+          
+          if (currentIndex < tabIds.length - 1) {
+            // Navigate to the next tab
+            const nextTabId = tabIds[currentIndex + 1];
+            console.log("Navigating to next tab:", nextTabId);
+            directNavigateToTab(nextTabId);
+          }
+        }
+      });
+    });
+
+    // Add direct click handlers to the back-tab buttons
+    document.querySelectorAll('.back-tab').forEach(button => {
+      button.addEventListener('click', function() {
+        console.log("Back tab button clicked");
+        const currentTab = this.closest('.tab-pane');
+        const currentTabId = currentTab.id;
+        
+        // Find the previous tab ID
+        const tabIds = ['property', 'income', 'expenses', 'projections'];
+        const currentIndex = tabIds.indexOf(currentTabId);
+        
+        if (currentIndex > 0) {
+          // Navigate to the previous tab
+          const prevTabId = tabIds[currentIndex - 1];
+          console.log("Navigating to previous tab:", prevTabId);
+          directNavigateToTab(prevTabId);
+        }
+      });
+    });
+
+    // Make the main tab buttons work directly as well
+    document.querySelectorAll('#calculatorTabs button').forEach(tabButton => {
+      tabButton.addEventListener('click', function() {
+        const targetTab = this.getAttribute('data-bs-target').substring(1); // Remove the #
+        console.log("Main tab button clicked:", targetTab);
+        directNavigateToTab(targetTab);
+      });
+    });
+
+    // Make the progress steps clickable
+    document.querySelectorAll('.progress-step').forEach(step => {
+      step.addEventListener('click', function() {
+        const targetTab = this.getAttribute('data-tab');
+        console.log("Progress step clicked:", targetTab);
+        directNavigateToTab(targetTab);
+      });
+    });
+    
+    // Tab navigation functionality
+    function navigateToTab(tabId) {
+      // Find and click the tab button
+      const tabButton = document.querySelector(`button[data-bs-target="#${tabId}"]`);
+      if (tabButton) {
+        // Hide quick metrics on projections tab
+        const quickMetricsCard = document.getElementById('quick-metrics-card');
+        if (tabId === 'projections') {
+          quickMetricsCard.style.display = 'none';
+        } else {
+          quickMetricsCard.style.display = 'block';
+        }
+        
+        // Activate the clicked tab
+        const triggerTabList = document.querySelectorAll('#calculatorTabs button');
+        triggerTabList.forEach(t => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        tabButton.classList.add('active');
+        tabButton.setAttribute('aria-selected', 'true');
+        
+        // Show the associated tab pane with animation
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+          pane.classList.remove('show', 'active');
+        });
+        const tabPane = document.getElementById(tabId);
+        tabPane.classList.add('show', 'active');
+        
+        // Update progress steps
+        updateProgressSteps(tabId);
+        
+        // Update charts if navigating to projections or expenses tab
+        if (tabId === 'projections') {
+          updateProjectionCharts();
+        }
+        if (tabId === 'expenses') {
+          updateExpenseCharts();
+        }
+        if (tabId === 'income') {
+          updateRentalGrowthChart();
+        }
+      }
+    }
+    
+    // Update progress steps
+    function updateProgressSteps(currentTabId) {
+      const tabIds = ['property', 'income', 'expenses', 'projections'];
+      const currentIndex = tabIds.indexOf(currentTabId);
+      
+      document.querySelectorAll('.progress-step').forEach((step, index) => {
+        step.classList.remove('active', 'completed');
+        
+        if (index === currentIndex) {
+          step.classList.add('active');
+        } else if (index < currentIndex) {
+          step.classList.add('completed');
+        }
+      });
+    }
+    
+    // Get tab index (position in sequence)
+    function getTabIndex(tabId) {
+      const tabIds = ['property', 'income', 'expenses', 'projections'];
+      return tabIds.indexOf(tabId);
+    }
+    
+    // Handle next button clicks
+    document.querySelectorAll('.next-tab').forEach(button => {
+      button.addEventListener('click', function() {
+        const currentTab = this.closest('.tab-pane');
+        const currentTabId = currentTab.id;
+        
+        // Validate all required fields in the current tab
+        const requiredFields = currentTab.querySelectorAll('input[required], select[required]');
+        let allValid = true;
+        
+        requiredFields.forEach(field => {
+          if (!field.checkValidity()) {
+            allValid = false;
+            field.reportValidity(); // Show validation error
+          }
+        });
+        
+        // Only proceed if all required fields in this tab are valid
+        if (allValid) {
+          // Find the next tab ID
+          const tabIds = ['property', 'income', 'expenses', 'projections'];
+          const currentIndex = tabIds.indexOf(currentTabId);
+          
+          if (currentIndex < tabIds.length - 1) {
+            // Add transition animation
+            const nextTabId = tabIds[currentIndex + 1];
+            navigateToTab(nextTabId);
+          }
+        }
+      });
+    });
+    
+    // Handle back button clicks
+    document.querySelectorAll('.back-tab').forEach(button => {
+      button.addEventListener('click', function() {
+        const currentTab = this.closest('.tab-pane');
+        const currentTabId = currentTab.id;
+        
+        // Find the previous tab ID
+        const tabIds = ['property', 'income', 'expenses', 'projections'];
+        const currentIndex = tabIds.indexOf(currentTabId);
+        
+        if (currentIndex > 0) {
+          navigateToTab(tabIds[currentIndex - 1]);
+        }
+      });
+    });
+    
+    // Make the progress steps clickable
+    document.querySelectorAll('.progress-step').forEach(step => {
+      step.addEventListener('click', function() {
+        const targetTab = this.getAttribute('data-tab');
+        const targetIndex = getTabIndex(targetTab);
+        const currentActiveIndex = getTabIndex(
+          document.querySelector('.progress-step.active').getAttribute('data-tab')
+        );
+        
+        // Only allow going back to completed steps or the current step
+        if (targetIndex <= currentActiveIndex) {
+          navigateToTab(targetTab);
+        }
+      });
+    });
+    
+    // Update the progress indicator when clicking tab buttons directly
+    document.querySelectorAll('#calculatorTabs button').forEach(tabButton => {
+      tabButton.addEventListener('click', function() {
+        const targetTab = this.getAttribute('data-bs-target').substring(1); // Remove the #
+        navigateToTab(targetTab);
+      });
+    });
+    
+    // Initialize currency toggle
+    function initCurrencyToggle() {
+      const toggle = document.getElementById('currency_toggle');
+      const myrRadio = document.getElementById('currency_myr');
+      const usdRadio = document.getElementById('currency_usd');
+      
+      if (toggle) {
+        toggle.addEventListener('change', function() {
+          if (this.checked) {
+            usdRadio.checked = true;
+          } else {
+            myrRadio.checked = true;
+          }
+          
+          updateSymbols();
+          updateCalculations();
+        });
+      }
+    }
+    
+    // Update currency symbols
+    function updateSymbols() {
+      const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+      const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+      
+      document.querySelectorAll('.currency-symbol').forEach(el => {
+        el.textContent = currencySymbol;
+      });
+    }
+    
+    // Initialize sliders
+    function initSliders() {
+      // Property price slider
+      const propertyPriceSlider = document.querySelector('.property-price-slider');
+      const propertyPriceInput = document.getElementById('calculator_property_price');
+      
+      if (propertyPriceSlider && propertyPriceInput) {
+        syncSliderWithInput(propertyPriceSlider, propertyPriceInput);
+        
+        propertyPriceSlider.addEventListener('input', function() {
+          propertyPriceInput.value = this.value;
+          updatePercentageLabels();
+          updateCalculations();
+        });
+        
+        propertyPriceInput.addEventListener('input', function() {
+          if (this.value) {
+            propertyPriceSlider.value = Math.min(Math.max(this.value, propertyPriceSlider.min), propertyPriceSlider.max);
+          }
+          updatePercentageLabels();
+          updateCalculations();
+        });
+      }
+      
+      // Down payment slider (percentage)
+      const downPaymentSlider = document.querySelector('.down-payment-slider');
+      const downPaymentInput = document.getElementById('calculator_down_payment');
+      
+      if (downPaymentSlider && downPaymentInput) {
+        downPaymentSlider.addEventListener('input', function() {
+          const propertyPrice = parseFloat(propertyPriceInput.value) || 500000;
+          const percentage = parseFloat(this.value);
+          const downPaymentValue = (propertyPrice * percentage / 100).toFixed(0);
+          
+          downPaymentInput.value = downPaymentValue;
+          updateDownPaymentProgressBar(percentage);
+          updateCalculations();
+        });
+        
+        downPaymentInput.addEventListener('input', function() {
+          const propertyPrice = parseFloat(propertyPriceInput.value) || 500000;
+          const downPaymentValue = parseFloat(this.value) || 0;
+          const percentage = Math.min(Math.max((downPaymentValue / propertyPrice * 100).toFixed(0), 10), 90);
+          
+          downPaymentSlider.value = percentage;
+          updateDownPaymentProgressBar(percentage);
+          document.getElementById('down-payment-percentage-badge').textContent = percentage + '%';
+          updateCalculations();
+        });
+      }
+      
+      // Interest rate slider
+      const interestRateSlider = document.querySelector('.interest-rate-slider');
+      const interestRateInput = document.querySelector('.interest-rate-input-container input');
+      const interestRateBadge = document.querySelector('.interest-rate-badge');
+      
+      if (interestRateSlider && interestRateBadge) {
+        interestRateSlider.addEventListener('input', function() {
+          interestRateInput.value = this.value;
+          interestRateBadge.textContent = this.value + '%';
+          updateCalculations();
+        });
+      }
+      
+      // Loan term buttons
+      const loanTermButtons = document.querySelectorAll('input[name="loan_term_toggle"]');
+      const loanTermSelect = document.getElementById('calculator_loan_term');
+      
+      if (loanTermButtons.length && loanTermSelect) {
+        loanTermButtons.forEach(button => {
+          button.addEventListener('change', function() {
+            if (this.checked) {
+              loanTermSelect.value = this.value;
+              updateCalculations();
+            }
+          });
+        });
+      }
+      
+      // Closing costs slider
+      const closingCostsSlider = document.querySelector('.closing-costs-slider');
+      const closingCostsInput = document.getElementById('calculator_closing_costs');
+      const closingCostsPercentage = document.querySelector('.closing-costs-percentage');
+      
+      if (closingCostsSlider && closingCostsInput && closingCostsPercentage) {
+        syncSliderWithInput(closingCostsSlider, closingCostsInput);
+        
+        closingCostsSlider.addEventListener('input', function() {
+          closingCostsInput.value = this.value;
+          updatePercentageLabels();
+          updateCalculations();
+        });
+        
+        closingCostsInput.addEventListener('input', function() {
+          if (this.value) {
+            closingCostsSlider.value = Math.min(Math.max(this.value, closingCostsSlider.min), closingCostsSlider.max);
+          }
+          updatePercentageLabels();
+          updateCalculations();
+        });
+      }
+      
+      // Renovation costs slider
+      const renovationCostsSlider = document.querySelector('.renovation-costs-slider');
+      const renovationCostsInput = document.getElementById('calculator_renovation_costs');
+      const renovationCostsPercentage = document.querySelector('.renovation-costs-percentage');
+      
+      if (renovationCostsSlider && renovationCostsInput && renovationCostsPercentage) {
+        syncSliderWithInput(renovationCostsSlider, renovationCostsInput);
+        
+        renovationCostsSlider.addEventListener('input', function() {
+          renovationCostsInput.value = this.value;
+          updatePercentageLabels();
+          updateCalculations();
+        });
+        
+        renovationCostsInput.addEventListener('input', function() {
+          if (this.value) {
+            renovationCostsSlider.value = Math.min(Math.max(this.value, renovationCostsSlider.min), renovationCostsSlider.max);
+          }
+          updatePercentageLabels();
+          updateCalculations();
+        });
+      }
+      
+      // Appreciation rate slider
+      const appreciationRateSlider = document.querySelector('.appreciation-rate-slider');
+      const appreciationRateInput = document.querySelector('.appreciation-rate-input-container input');
+      const appreciationRateBadge = document.querySelector('.appreciation-rate-badge');
+      
+      if (appreciationRateSlider && appreciationRateBadge) {
+        appreciationRateSlider.addEventListener('input', function() {
+          appreciationRateInput.value = this.value;
+          appreciationRateBadge.textContent = this.value + '%';
+          updateCalculations();
+        });
+      }
+      
+      // Holding period slider
+      const holdingPeriodSlider = document.querySelector('.holding-period-slider');
+      const holdingPeriodBadge = document.querySelector('.holding-period-badge');
+      
+      if (holdingPeriodSlider && holdingPeriodBadge) {
+        holdingPeriodSlider.addEventListener('input', function() {
+          holdingPeriodBadge.textContent = this.value + ' years';
+          updateCalculations();
+        });
+      }
+      
+      // Monthly rental slider
+      const monthlyRentalSlider = document.querySelector('.monthly-rental-slider');
+      const monthlyRentalInput = document.getElementById('calculator_monthly_rental');
+      const monthlyRentalBadge = document.querySelector('.monthly-rental-badge');
+      
+      if (monthlyRentalSlider && monthlyRentalInput && monthlyRentalBadge) {
+        syncSliderWithInput(monthlyRentalSlider, monthlyRentalInput);
+        
+        monthlyRentalSlider.addEventListener('input', function() {
+          monthlyRentalInput.value = this.value;
+          
+          const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+          const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+          monthlyRentalBadge.textContent = currencySymbol + ' ' + Number(this.value).toLocaleString();
+          
+          updateCalculations();
+        });
+        
+        monthlyRentalInput.addEventListener('input', function() {
+          if (this.value) {
+            monthlyRentalSlider.value = Math.min(Math.max(this.value, monthlyRentalSlider.min), monthlyRentalSlider.max);
+            
+            const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+            const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+            monthlyRentalBadge.textContent = currencySymbol + ' ' + Number(this.value).toLocaleString();
+          }
+          updateCalculations();
+        });
+      }
+      
+      // Other income slider
+      const otherIncomeSlider = document.querySelector('.other-income-slider');
+      const otherIncomeInput = document.getElementById('calculator_other_income');
+      
+      if (otherIncomeSlider && otherIncomeInput) {
+        syncSliderWithInput(otherIncomeSlider, otherIncomeInput);
+        
+        otherIncomeSlider.addEventListener('input', function() {
+          otherIncomeInput.value = this.value;
+          updateCalculations();
+        });
+        
+        otherIncomeInput.addEventListener('input', function() {
+          if (this.value) {
+            otherIncomeSlider.value = Math.min(Math.max(this.value, otherIncomeSlider.min), otherIncomeSlider.max);
+          }
+          updateCalculations();
+        });
+      }
+      
+      // Occupancy rate slider
+      const occupancyRateSlider = document.querySelector('.occupancy-rate-slider');
+      const occupancyRateBadge = document.querySelector('.occupancy-rate-badge');
+      
+      if (occupancyRateSlider && occupancyRateBadge) {
+        occupancyRateSlider.addEventListener('input', function() {
+          occupancyRateBadge.textContent = this.value + '%';
+          updateOccupancyUnits(parseFloat(this.value));
+          updateCalculations();
+        });
+      }
+      
+      // Rental growth slider
+      const rentalGrowthSlider = document.querySelector('.rental-growth-slider');
+      const rentalGrowthBadge = document.querySelector('.rental-growth-badge');
+      
+      if (rentalGrowthSlider && rentalGrowthBadge) {
+        rentalGrowthSlider.addEventListener('input', function() {
+          rentalGrowthBadge.textContent = this.value + '%';
+          updateRentalGrowthChart();
+          updateCalculations();
+        });
+      }
+      
+      // Expense sliders
+      initExpenseSlider('property-tax');
+      initExpenseSlider('insurance');
+      initExpenseSlider('maintenance');
+      initExpenseSlider('management-fees');
+      initExpenseSlider('utilities');
+      initExpenseSlider('other-expenses');
+      
+      // Vacancy rate slider
+      const vacancyRateSlider = document.querySelector('.vacancy-rate-slider');
+      const vacancyRateBadge = document.querySelector('.vacancy-rate-badge');
+      
+      if (vacancyRateSlider && vacancyRateBadge) {
+        vacancyRateSlider.addEventListener('input', function() {
+          vacancyRateBadge.textContent = this.value + '%';
+          updateVacancyVisualization(parseFloat(this.value));
+          updateCalculations();
+        });
+      }
+    }
+    
+    // Initialize expense slider
+    function initExpenseSlider(expenseType) {
+      const slider = document.querySelector(`.${expenseType}-slider`);
+      const input = document.getElementById(`calculator_${expenseType.replace(/-/g, '_')}`);
+      const badge = document.querySelector(`.${expenseType}-badge`);
+      
+      if (slider && input && badge) {
+        syncSliderWithInput(slider, input);
+        
+        slider.addEventListener('input', function() {
+          input.value = this.value;
+          
+          const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+          const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+          badge.textContent = currencySymbol + ' ' + Number(this.value).toLocaleString();
+          
+          updateExpenseCharts();
+          updateCalculations();
+        });
+        
+        input.addEventListener('input', function() {
+          if (this.value) {
+            slider.value = Math.min(Math.max(this.value, slider.min), slider.max);
+            
+            const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+            const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+            badge.textContent = currencySymbol + ' ' + Number(this.value).toLocaleString();
+          }
+          updateExpenseCharts();
+          updateCalculations();
+        });
+      }
+    }
+    
+    // Synchronize slider with input
+    function syncSliderWithInput(slider, input) {
+      if (input.value) {
+        slider.value = Math.min(Math.max(input.value, slider.min), slider.max);
+      }
+    }
+    
+    // Update percentage labels based on property price
+    function updatePercentageLabels() {
+      const propertyPrice = parseFloat(document.getElementById('calculator_property_price').value) || 500000;
+      const closingCosts = parseFloat(document.getElementById('calculator_closing_costs').value) || 15000;
+      const renovationCosts = parseFloat(document.getElementById('calculator_renovation_costs').value) || 25000;
+      
+      const closingCostsPercentage = (closingCosts / propertyPrice * 100).toFixed(1);
+      const renovationCostsPercentage = (renovationCosts / propertyPrice * 100).toFixed(1);
+      
+      const closingCostsPercentageEl = document.querySelector('.closing-costs-percentage');
+      const renovationCostsPercentageEl = document.querySelector('.renovation-costs-percentage');
+      
+      if (closingCostsPercentageEl) {
+        closingCostsPercentageEl.textContent = closingCostsPercentage + '%';
+      }
+      
+      if (renovationCostsPercentageEl) {
+        renovationCostsPercentageEl.textContent = renovationCostsPercentage + '%';
+      }
+    }
+    
+    // Update down payment progress bar
+    function updateDownPaymentProgressBar(percentage) {
+      const downPaymentProgress = document.getElementById('down-payment-progress');
+      const loanAmountProgress = document.getElementById('loan-amount-progress');
+      const downPaymentPercentageBadge = document.getElementById('down-payment-percentage-badge');
+      
+      if (downPaymentProgress && loanAmountProgress && downPaymentPercentageBadge) {
+        downPaymentProgress.style.width = percentage + '%';
+        loanAmountProgress.style.width = (100 - percentage) + '%';
+        downPaymentPercentageBadge.textContent = percentage + '%';
+      }
+    }
+    
+    // Update occupancy units visualization
+    function updateOccupancyUnits(occupancyRate) {
+      const occupancyUnitsContainer = document.getElementById('occupancy-units');
+      
+      if (occupancyUnitsContainer) {
+        // Clear existing units
+        occupancyUnitsContainer.innerHTML = '';
+        
+        // Create 100 unit boxes
+        const totalUnits = 20;
+        const occupiedUnits = Math.round(occupancyRate / 100 * totalUnits);
+        
+        for (let i = 0; i < totalUnits; i++) {
+          const unitBox = document.createElement('div');
+          unitBox.className = i < occupiedUnits ? 'unit-box unit-occupied' : 'unit-box unit-vacant';
+          occupancyUnitsContainer.appendChild(unitBox);
+        }
+      }
+    }
+    
+    // Update vacancy visualization
+    function updateVacancyVisualization(vacancyRate) {
+      const occupancyProgress = document.getElementById('occupancy-progress');
+      const vacancyProgress = document.getElementById('vacancy-progress');
+      
+      if (occupancyProgress && vacancyProgress) {
+        const occupancyPercentage = 100 - vacancyRate;
+        occupancyProgress.style.width = occupancyPercentage + '%';
+        vacancyProgress.style.width = vacancyRate + '%';
+      }
+    }
+    
+    // Initialize chart view toggle
+    function initChartViewToggle() {
+      const pieViewBtn = document.getElementById('chart-view-pie');
+      const barViewBtn = document.getElementById('chart-view-bar');
+      
+      if (pieViewBtn && barViewBtn) {
+        pieViewBtn.addEventListener('click', function() {
+          pieViewBtn.classList.add('active');
+          barViewBtn.classList.remove('active');
+          updateExpenseCharts('pie');
+        });
+        
+        barViewBtn.addEventListener('click', function() {
+          barViewBtn.classList.add('active');
+          pieViewBtn.classList.remove('active');
+          updateExpenseCharts('bar');
+        });
+      }
+      
+      // Projection chart view toggle
+      const chartDataToggleButtons = document.querySelectorAll('.chart-data-toggle input');
+      
+      if (chartDataToggleButtons.length) {
+        chartDataToggleButtons.forEach(button => {
+          button.addEventListener('change', function() {
+            if (this.checked) {
+              updateProjectionCharts(this.id.replace('chart-data-', ''));
+            }
+          });
+        });
+      }
+    }
+    
+    // Initialize metrics toggle
+    function initMetricsToggle() {
+      const toggleBtn = document.querySelector('.toggle-detailed-metrics');
+      const simpleView = document.querySelector('.simple-metrics-view');
+      const detailedView = document.querySelector('.detailed-metrics-view');
+      
+      if (toggleBtn && simpleView && detailedView) {
+        toggleBtn.addEventListener('click', function() {
+          if (simpleView.style.display !== 'none') {
+            simpleView.style.display = 'none';
+            detailedView.style.display = 'block';
+            this.innerHTML = '<i class="fas fa-list me-1"></i> Simple View';
+          } else {
+            simpleView.style.display = 'block';
+            detailedView.style.display = 'none';
+            this.innerHTML = '<i class="fas fa-chart-line me-1"></i> Detailed View';
+          }
+        });
+      }
+    }
+    
+    // Initialize breakdown buttons
+    function initBreakdownButtons() {
+      const investmentBreakdownBtn = document.querySelector('.investment-breakdown-btn');
+      const investmentBreakdownChart = document.querySelector('.investment-breakdown-chart');
+      
+      if (investmentBreakdownBtn && investmentBreakdownChart) {
+        investmentBreakdownBtn.addEventListener('click', function() {
+          if (investmentBreakdownChart.style.display === 'none') {
+            investmentBreakdownChart.style.display = 'block';
+            // Initialize chart if needed
+            updateInvestmentBreakdownChart();
+          } else {
+            investmentBreakdownChart.style.display = 'none';
+          }
+        });
+      }
+      
+      const incomeBreakdownBtn = document.querySelector('.income-breakdown-btn');
+      const incomeBreakdownChart = document.querySelector('.income-breakdown-chart');
+      
+      if (incomeBreakdownBtn && incomeBreakdownChart) {
+        incomeBreakdownBtn.addEventListener('click', function() {
+          if (incomeBreakdownChart.style.display === 'none') {
+            incomeBreakdownChart.style.display = 'block';
+            // Initialize chart if needed
+            updateIncomeBreakdownChart();
+          } else {
+            incomeBreakdownChart.style.display = 'none';
+          }
+        });
+      }
+    }
+    
+    // Initialize charts
+    function initCharts() {
+      // Initialize Chart.js defaults
+      Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+      Chart.defaults.color = '#6c757d';
+      
+      // Initial chart creation
+      createExpenseChart();
+      createRentalGrowthChart();
+      createProjectionChart();
+      createGaugeCharts();
+      
+      // Initial data update
+      updateOccupancyUnits(95);
+      updateVacancyVisualization(5);
+      updateDownPaymentProgressBar(20);
+      updatePercentageLabels();
+    }
+    
+    // Create expense allocation chart
+    function createExpenseChart() {
+      const ctx = document.getElementById('expenseAllocationChart');
+      
+      if (ctx) {
+        expenseChart = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: ['Property Tax', 'Insurance', 'Maintenance', 'Management', 'Utilities', 'Other'],
+            datasets: [{
+              data: [2000, 1200, 2400, 3000, 1200, 1000],
+              backgroundColor: [
+                'rgba(253, 126, 20, 0.9)',
+                'rgba(253, 126, 20, 0.8)',
+                'rgba(253, 126, 20, 0.7)',
+                'rgba(253, 126, 20, 0.6)',
+                'rgba(253, 126, 20, 0.5)',
+                'rgba(253, 126, 20, 0.4)'
+              ],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 20,
+                  boxWidth: 12
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+                    const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+                    return context.label + ': ' + currencySymbol + ' ' + context.raw.toLocaleString();
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+    
+    // Create rental growth chart
+    function createRentalGrowthChart() {
+      const ctx = document.getElementById('rentalGrowthChart');
+      
+      if (ctx) {
+        rentalGrowthChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: Array.from({length: 11}, (_, i) => 'Year ' + i),
+            datasets: [{
+              label: 'Monthly Rent',
+              data: [],
+              borderColor: 'rgba(253, 126, 20, 1)',
+              backgroundColor: 'rgba(253, 126, 20, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: false,
+                ticks: {
+                  callback: function(value) {
+                    const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+                    const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+                    return currencySymbol + ' ' + value.toLocaleString();
+                  }
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+                    const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+                    return 'Monthly Rent: ' + currencySymbol + ' ' + context.raw.toLocaleString();
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+    
+    // Create projection chart
+    function createProjectionChart() {
+      const ctx = document.getElementById('projectionChart');
+      
+      if (ctx) {
+        projectionChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: Array.from({length: 11}, (_, i) => 'Year ' + i),
+            datasets: [
+              {
+                label: 'Property Value',
+                data: [],
+                borderColor: 'rgba(253, 126, 20, 1)',
+                backgroundColor: 'rgba(253, 126, 20, 0.05)',
+                tension: 0.4,
+                fill: true,
+                yAxisID: 'y'
+              },
+              {
+                label: 'Monthly Rent',
+                data: [],
+                borderColor: 'rgba(40, 167, 69, 1)',
+                backgroundColor: 'rgba(40, 167, 69, 0.05)',
+                tension: 0.4,
+                fill: true,
+                hidden: true,
+                yAxisID: 'y1'
+              },
+              {
+                label: 'Monthly Cash Flow',
+                data: [],
+                borderColor: 'rgba(0, 123, 255, 1)',
+                backgroundColor: 'rgba(0, 123, 255, 0.05)',
+                tension: 0.4,
+                fill: true,
+                hidden: true,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false
+            },
+            scales: {
+              y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                  display: true,
+                  text: 'Property Value'
+                },
+                ticks: {
+                  callback: function(value) {
+                    const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+                    const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+                    return currencySymbol + ' ' + value.toLocaleString();
+                  }
+                }
+              },
+              y1: {
+                type: 'linear',
+                display: false,
+                position: 'right',
+                title: {
+                  display: true,
+                  text: 'Monthly Amount'
+                },
+                ticks: {
+                  callback: function(value) {
+                    const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+                    const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+                    return currencySymbol + ' ' + value.toLocaleString();
+                  }
+                },
+                grid: {
+                  drawOnChartArea: false
+                }
+              }
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+                    const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+                    return context.dataset.label + ': ' + currencySymbol + ' ' + context.raw.toLocaleString();
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+    
+    // Create gauge charts
+    function createGaugeCharts() {
+      // Cash on Cash Gauge
+      const cocCtx = document.getElementById('cashOnCashGauge');
+      
+      if (cocCtx) {
+        cashOnCashGauge = new Chart(cocCtx, {
+          type: 'doughnut',
+          data: {
+            datasets: [{
+              data: [5.23, 10-5.23],
+              backgroundColor: [
+                getGaugeColor(5.23, 'coc'),
+                'rgba(220, 220, 220, 0.2)'
+              ],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            circumference: 180,
+            rotation: 270,
+            cutout: '75%',
+            plugins: {
+              tooltip: { enabled: false },
+              legend: { display: false }
+            }
+          }
+        });
+      }
+      
+      // Total ROI Gauge
+      const roiCtx = document.getElementById('totalRoiGauge');
+      
+      if (roiCtx) {
+        totalRoiGauge = new Chart(roiCtx, {
+          type: 'doughnut',
+          data: {
+            datasets: [{
+              data: [78.45, 120-78.45],
+              backgroundColor: [
+                getGaugeColor(78.45, 'roi'),
+                'rgba(220, 220, 220, 0.2)'
+              ],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            circumference: 180,
+            rotation: 270,
+            cutout: '75%',
+            plugins: {
+              tooltip: { enabled: false },
+              legend: { display: false }
+            }
+          }
+        });
+      }
+    }
+    
+    // Create and update investment breakdown chart
+    function updateInvestmentBreakdownChart() {
+      const ctx = document.getElementById('investmentBreakdownChart');
+      
+      if (!ctx) return;
+      
+      const downPayment = parseFloat(document.getElementById('calculator_down_payment').value) || 100000;
+      const closingCosts = parseFloat(document.getElementById('calculator_closing_costs').value) || 15000;
+      const renovationCosts = parseFloat(document.getElementById('calculator_renovation_costs').value) || 25000;
+      
+      const data = {
+        labels: ['Down Payment', 'Closing Costs', 'Renovation'],
+        datasets: [{
+          data: [downPayment, closingCosts, renovationCosts],
+          backgroundColor: [
+            'rgba(253, 126, 20, 0.8)',
+            'rgba(253, 126, 20, 0.6)',
+            'rgba(253, 126, 20, 0.4)'
+          ],
+          borderWidth: 1
+        }]
+      };
+      
+      if (!investmentBreakdownChart) {
+        investmentBreakdownChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: data,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: {
+                  boxWidth: 12
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+                    const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+                    const value = context.raw;
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = Math.round((value / total) * 100);
+                    return context.label + ': ' + currencySymbol + ' ' + value.toLocaleString() + ' (' + percentage + '%)';
+                  }
+                }
+              }
+            }
+          }
+        });
+      } else {
+        investmentBreakdownChart.data = data;
+        investmentBreakdownChart.update();
+      }
+    }
+    
+    // Create and update income breakdown chart
+    function updateIncomeBreakdownChart() {
+      const ctx = document.getElementById('incomeBreakdownChart');
+      
+      if (!ctx) return;
+      
+      const monthlyRental = parseFloat(document.getElementById('calculator_monthly_rental').value) || 2500;
+      const otherIncome = parseFloat(document.getElementById('calculator_other_income').value) || 200;
+      const occupancyRate = parseFloat(document.getElementById('calculator_occupancy_rate').value) || 95;
+      
+      const annualRental = monthlyRental * 12;
+      const effectiveRental = annualRental * (occupancyRate / 100);
+      const vacancyLoss = annualRental - effectiveRental;
+      const annualOtherIncome = otherIncome * 12;
+      
+      const data = {
+        labels: ['Rental Income', 'Vacancy Loss', 'Other Income'],
+        datasets: [{
+          data: [effectiveRental, vacancyLoss, annualOtherIncome],
+          backgroundColor: [
+            'rgba(40, 167, 69, 0.7)',
+            'rgba(220, 53, 69, 0.7)',
+            'rgba(253, 126, 20, 0.7)'
+          ],
+          borderWidth: 1
+        }]
+      };
+      
+      if (!incomeBreakdownChart) {
+        incomeBreakdownChart = new Chart(ctx, {
+          type: 'pie',
+          data: data,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: {
+                  boxWidth: 12
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+                    const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+                    const value = context.raw;
+                    const total = effectiveRental + annualOtherIncome + vacancyLoss;
+                    const percentage = Math.round((value / total) * 100);
+                    return context.label + ': ' + currencySymbol + ' ' + value.toLocaleString() + ' (' + percentage + '%)';
+                  }
+                }
+              }
+            }
+          }
+        });
+      } else {
+        incomeBreakdownChart.data = data;
+        incomeBreakdownChart.update();
+      }
+    }
+    
+    // Update expense charts
+    function updateExpenseCharts(type = 'pie') {
+      if (!expenseChart) return;
+      
+      const propertyTax = parseFloat(document.getElementById('calculator_property_tax').value) || 2000;
+      const insurance = parseFloat(document.getElementById('calculator_insurance').value) || 1200;
+      const maintenance = parseFloat(document.getElementById('calculator_maintenance').value) || 2400;
+      const managementFees = parseFloat(document.getElementById('calculator_management_fees').value) || 3000;
+      const utilities = parseFloat(document.getElementById('calculator_utilities').value) || 1200;
+      const otherExpenses = parseFloat(document.getElementById('calculator_other_expenses').value) || 1000;
+      
+      // Update expense ratio
+      const monthlyRental = parseFloat(document.getElementById('calculator_monthly_rental').value) || 2500;
+      const annualRental = monthlyRental * 12;
+      const totalExpenses = propertyTax + insurance + maintenance + managementFees + utilities + otherExpenses;
+      const expenseRatio = (totalExpenses / annualRental) * 100;
+      
+      // Update expense ratio progress bar
+      const expenseRatioBar = document.getElementById('expense-ratio-bar');
+      const expenseRatioLabel = document.querySelector('.expense-ratio-label');
+      const expenseRatioStatus = document.querySelector('.expense-ratio-status');
+      
+      if (expenseRatioBar && expenseRatioLabel && expenseRatioStatus) {
+        expenseRatioBar.style.width = expenseRatio + '%';
+        expenseRatioLabel.textContent = expenseRatio.toFixed(1) + '%';
+        
+        // Update status color
+        expenseRatioBar.className = 'progress-bar';
+        expenseRatioStatus.className = 'expense-ratio-status badge';
+        
+        if (expenseRatio < 30) {
+          expenseRatioBar.classList.add('bg-success');
+          expenseRatioStatus.classList.add('bg-success');
+          expenseRatioStatus.textContent = 'Excellent';
+        } else if (expenseRatio < 40) {
+          expenseRatioBar.classList.add('bg-success');
+          expenseRatioStatus.classList.add('bg-success');
+          expenseRatioStatus.textContent = 'Good';
+        } else if (expenseRatio < 50) {
+          expenseRatioBar.classList.add('bg-warning');
+          expenseRatioStatus.classList.add('bg-warning');
+          expenseRatioStatus.textContent = 'Fair';
+        } else {
+          expenseRatioBar.classList.add('bg-danger');
+          expenseRatioStatus.classList.add('bg-danger');
+          expenseRatioStatus.textContent = 'Poor';
+        }
+      }
+      
+      // Change chart type if requested
+      if (expenseChart.config.type !== type) {
+        expenseChart.destroy();
+        expenseChart = new Chart(document.getElementById('expenseAllocationChart'), {
+          type: type,
+          data: {
+            labels: ['Property Tax', 'Insurance', 'Maintenance', 'Management', 'Utilities', 'Other'],
+            datasets: [{
+              data: [propertyTax, insurance, maintenance, managementFees, utilities, otherExpenses],
+              backgroundColor: type === 'pie' ? [
+                'rgba(253, 126, 20, 0.9)',
+                'rgba(253, 126, 20, 0.8)',
+                'rgba(253, 126, 20, 0.7)',
+                'rgba(253, 126, 20, 0.6)',
+                'rgba(253, 126, 20, 0.5)',
+                'rgba(253, 126, 20, 0.4)'
+              ] : 'rgba(253, 126, 20, 0.7)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: type === 'bar' ? 'y' : undefined,
+            plugins: {
+              legend: {
+                position: type === 'pie' ? 'bottom' : 'right',
+                display: type === 'pie',
+                labels: {
+                  padding: 20,
+                  boxWidth: 12
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+                    const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+                    const value = context.raw;
+                    const percentage = Math.round((value / totalExpenses) * 100);
+                    return context.label + ': ' + currencySymbol + ' ' + value.toLocaleString() + ' (' + percentage + '%)';
+                  }
+                }
+              }
+            }
+          }
+        });
+      } else {
+        // Just update data
+        expenseChart.data.datasets[0].data = [propertyTax, insurance, maintenance, managementFees, utilities, otherExpenses];
+        expenseChart.update();
+      }
+    }
+    
+    // Update rental growth chart
+    function updateRentalGrowthChart() {
+      if (!rentalGrowthChart) return;
+      
+      const monthlyRental = parseFloat(document.getElementById('calculator_monthly_rental').value) || 2500;
+      const rentalGrowthRate = parseFloat(document.getElementById('calculator_rental_growth_rate').value) || 2;
+      const holdingPeriod = parseFloat(document.getElementById('calculator_holding_period').value) || 10;
+      
+      const rentalGrowthData = [];
+      for (let i = 0; i <= holdingPeriod; i++) {
+        const growthFactor = Math.pow(1 + (rentalGrowthRate / 100), i);
+        rentalGrowthData.push(monthlyRental * growthFactor);
+      }
+      
+      rentalGrowthChart.data.datasets[0].data = rentalGrowthData;
+      rentalGrowthChart.data.labels = Array.from({length: holdingPeriod + 1}, (_, i) => 'Year ' + i);
+      rentalGrowthChart.update();
+      
+      // Update future monthly rent display
+      const futureMonthlyRent = document.getElementById('future-monthly-rent');
+      if (futureMonthlyRent) {
+        const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+        const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+        futureMonthlyRent.textContent = currencySymbol + ' ' + rentalGrowthData[holdingPeriod].toLocaleString(undefined, {maximumFractionDigits: 0});
+      }
+      
+      // Update rental yield indicators
+      updateRentalYieldIndicators();
+    }
+    
+    // Update rental yield indicators
+    function updateRentalYieldIndicators() {
+      const monthlyRental = parseFloat(document.getElementById('calculator_monthly_rental').value) || 2500;
+      const propertyPrice = parseFloat(document.getElementById('calculator_property_price').value) || 500000;
+      
+      const annualRental = monthlyRental * 12;
+      const rentalYield = (annualRental / propertyPrice) * 100;
+      
+      const rentalYieldBadge = document.getElementById('rental-yield-badge');
+      const rentalYieldBar = document.getElementById('rental-yield-bar');
+      
+      if (rentalYieldBadge && rentalYieldBar) {
+        rentalYieldBadge.textContent = rentalYield.toFixed(1) + '%';
+        rentalYieldBar.style.width = (rentalYield * 10) + '%'; // Scale for visualization
+        
+        // Update color based on yield
+        rentalYieldBadge.className = 'badge rental-yield-badge';
+        
+        if (rentalYield < 3) {
+          rentalYieldBadge.classList.add('bg-danger');
+          rentalYieldBar.className = 'progress-bar bg-danger';
+        } else if (rentalYield < 5) {
+          rentalYieldBadge.classList.add('bg-warning');
+          rentalYieldBar.className = 'progress-bar bg-warning';
+        } else if (rentalYield < 7) {
+          rentalYieldBadge.classList.add('bg-success');
+          rentalYieldBar.className = 'progress-bar bg-success';
+        } else {
+          rentalYieldBadge.classList.add('bg-primary');
+          rentalYieldBar.className = 'progress-bar bg-primary';
+        }
+      }
+    }
+    
+    // Update projection charts
+    function updateProjectionCharts(dataType = 'value') {
+      if (!projectionChart) return;
+      
+      const propertyPrice = parseFloat(document.getElementById('calculator_property_price').value) || 500000;
+      const appreciationRate = parseFloat(document.getElementById('calculator_appreciation_rate').value) || 3;
+      const holdingPeriod = parseFloat(document.getElementById('calculator_holding_period').value) || 10;
+      
+      const monthlyRental = parseFloat(document.getElementById('calculator_monthly_rental').value) || 2500;
+      const rentalGrowthRate = parseFloat(document.getElementById('calculator_rental_growth_rate').value) || 2;
+      
+      const propertyValueData = [];
+      const rentalData = [];
+      const cashFlowData = [];
+      
+      for (let i = 0; i <= holdingPeriod; i++) {
+        // Property value growth
+        const valueFactor = Math.pow(1 + (appreciationRate / 100), i);
+        propertyValueData.push(propertyPrice * valueFactor);
+        
+        // Rental growth
+        const rentalFactor = Math.pow(1 + (rentalGrowthRate / 100), i);
+        rentalData.push(monthlyRental * rentalFactor);
+        
+        // Cash flow (simplified - would come from full calculation in real app)
+        const calculatedCashFlow = document.getElementById('monthly-cash-flow').textContent;
+        const currentCashFlow = parseFloat(calculatedCashFlow.replace(/[^\d.-]/g, '')) || 612;
+        const cashFlowFactor = Math.pow(1 + (rentalGrowthRate / 100), i);
+        cashFlowData.push(currentCashFlow * cashFlowFactor);
+      }
+      
+      // Update chart visibility based on data type
+      if (dataType === 'value') {
+        projectionChart.data.datasets[0].hidden = false;
+        projectionChart.data.datasets[1].hidden = true;
+        projectionChart.data.datasets[2].hidden = true;
+        projectionChart.options.scales.y.display = true;
+        projectionChart.options.scales.y1.display = false;
+      } else if (dataType === 'rental') {
+        projectionChart.data.datasets[0].hidden = true;
+        projectionChart.data.datasets[1].hidden = false;
+        projectionChart.data.datasets[2].hidden = true;
+        projectionChart.options.scales.y.display = false;
+        projectionChart.options.scales.y1.display = true;
+      } else if (dataType === 'cashflow') {
+        projectionChart.data.datasets[0].hidden = true;
+        projectionChart.data.datasets[1].hidden = true;
+        projectionChart.data.datasets[2].hidden = false;
+        projectionChart.options.scales.y.display = false;
+        projectionChart.options.scales.y1.display = true;
+      } else if (dataType === 'all') {
+        projectionChart.data.datasets[0].hidden = false;
+        projectionChart.data.datasets[1].hidden = false;
+        projectionChart.data.datasets[2].hidden = false;
+        projectionChart.options.scales.y.display = true;
+        projectionChart.options.scales.y1.display = true;
+      }
+      
+      // Update the datasets
+      projectionChart.data.datasets[0].data = propertyValueData;
+      projectionChart.data.datasets[1].data = rentalData;
+      projectionChart.data.datasets[2].data = cashFlowData;
+      projectionChart.data.labels = Array.from({length: holdingPeriod + 1}, (_, i) => 'Year ' + i);
+      projectionChart.update();
+      
+      // Update future values display
+      const futurePropertyValue = document.getElementById('future-property-value');
+      const totalAppreciation = document.getElementById('total-appreciation');
+      const appreciationPercentage = document.getElementById('appreciation-percentage');
+      
+      if (futurePropertyValue && totalAppreciation && appreciationPercentage) {
+        const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+        const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+        
+        const futureValue = propertyValueData[holdingPeriod];
+        const totalAppreciationValue = futureValue - propertyPrice;
+        const appreciationPercentageValue = (totalAppreciationValue / propertyPrice) * 100;
+        
+        futurePropertyValue.textContent = currencySymbol + ' ' + futureValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+        totalAppreciation.textContent = currencySymbol + ' ' + totalAppreciationValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+        appreciationPercentage.textContent = appreciationPercentageValue.toFixed(1) + '%';
+      }
+      
+      // Update future rent values
+      const futureMonthlyRent = document.getElementById('future-monthly-rent');
+      const totalRentIncrease = document.getElementById('total-rent-increase');
+      const futureAnnualRent = document.getElementById('future-annual-rent');
+      
+      if (futureMonthlyRent && totalRentIncrease && futureAnnualRent) {
+        const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+        const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+        
+        const futureMontRentValue = rentalData[holdingPeriod];
+        const totalRentIncreaseValue = futureMontRentValue - monthlyRental;
+        const futureAnnualRentValue = futureMontRentValue * 12;
+        
+        futureMonthlyRent.textContent = currencySymbol + ' ' + futureMontRentValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+        totalRentIncrease.textContent = currencySymbol + ' ' + totalRentIncreaseValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+        futureAnnualRent.textContent = currencySymbol + ' ' + futureAnnualRentValue.toLocaleString(undefined, {maximumFractionDigits: 0});
+      }
+      
+      // Update summary values
+      updateInvestmentSummary(propertyPrice, propertyValueData[holdingPeriod], cashFlowData);
+    }
+    
+    // Update investment summary
+    function updateInvestmentSummary(initialValue, futureValue, cashFlowData) {
+      const holdingPeriod = parseFloat(document.getElementById('calculator_holding_period').value) || 10;
+      const downPayment = parseFloat(document.getElementById('calculator_down_payment').value) || 100000;
+      const closingCosts = parseFloat(document.getElementById('calculator_closing_costs').value) || 15000;
+      const renovationCosts = parseFloat(document.getElementById('calculator_renovation_costs').value) || 25000;
+      
+      // Calculate totals
+      const initialInvestment = downPayment + closingCosts + renovationCosts;
+      const appreciation = futureValue - initialValue;
+      
+      // Calculate cash flow
+      const monthlyCashFlow = parseFloat(document.getElementById('monthly-cash-flow').textContent.replace(/[^\d.-]/g, '')) || 612;
+      const totalCashFlow = monthlyCashFlow * 12 * holdingPeriod;
+      
+      // Calculate principal paid down (simplified)
+      const loanAmount = initialValue - downPayment;
+      const principalPaidDown = loanAmount * 0.3; // Simplified - in real app this would be calculated from amortization
+      
+      // Total profit
+      const totalProfit = appreciation + totalCashFlow + principalPaidDown;
+      
+      // Update the summary elements
+      const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+      const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+      
+      document.getElementById('summary-initial-investment').textContent = currencySymbol + ' ' + initialInvestment.toLocaleString(undefined, {maximumFractionDigits: 0});
+      document.getElementById('summary-total-cashflow').textContent = currencySymbol + ' ' + totalCashFlow.toLocaleString(undefined, {maximumFractionDigits: 0});
+      document.getElementById('summary-appreciation').textContent = currencySymbol + ' ' + appreciation.toLocaleString(undefined, {maximumFractionDigits: 0});
+      document.getElementById('summary-principal').textContent = currencySymbol + ' ' + principalPaidDown.toLocaleString(undefined, {maximumFractionDigits: 0});
+      document.getElementById('summary-total-profit').textContent = currencySymbol + ' ' + totalProfit.toLocaleString(undefined, {maximumFractionDigits: 0});
+      
+      // Update investment breakdown chart
+      updateInvestmentBreakdownChart();
+    }
+    
+    // Get color for gauge based on value
+    function getGaugeColor(value, type) {
+      let color;
+      
+      if (type === 'coc') {
+        if (value < 3) {
+          color = 'rgba(220, 53, 69, 0.8)'; // Red - poor
+        } else if (value < 5) {
+          color = 'rgba(255, 193, 7, 0.8)'; // Yellow - fair
+        } else if (value < 8) {
+          color = 'rgba(40, 167, 69, 0.8)'; // Green - good
+        } else {
+          color = 'rgba(0, 123, 255, 0.8)'; // Blue - excellent
+        }
+      } else if (type === 'roi') {
+        if (value < 40) {
+          color = 'rgba(220, 53, 69, 0.8)'; // Red - poor
+        } else if (value < 60) {
+          color = 'rgba(255, 193, 7, 0.8)'; // Yellow - fair
+        } else if (value < 80) {
+          color = 'rgba(40, 167, 69, 0.8)'; // Green - good
+        } else {
+          color = 'rgba(0, 123, 255, 0.8)'; // Blue - excellent
+        }
+      }
+      
+      return color;
+    }
+    
+    // Update gauge charts
+    function updateGaugeCharts(cashOnCash, totalRoi) {
+      if (!cashOnCashGauge || !totalRoiGauge) return;
+      
+      // Update Cash on Cash gauge
+      cashOnCashGauge.data.datasets[0].data = [cashOnCash, 10 - cashOnCash];
+      cashOnCashGauge.data.datasets[0].backgroundColor = [
+        getGaugeColor(cashOnCash, 'coc'),
+        'rgba(220, 220, 220, 0.2)'
+      ];
+      cashOnCashGauge.update();
+      
+      // Update ROI gauge
+      totalRoiGauge.data.datasets[0].data = [totalRoi, 120 - totalRoi];
+      totalRoiGauge.data.datasets[0].backgroundColor = [
+        getGaugeColor(totalRoi, 'roi'),
+        'rgba(220, 220, 220, 0.2)'
+      ];
+      totalRoiGauge.update();
+      
+      // Update gauge values
+      document.getElementById('coc-gauge-value').textContent = cashOnCash.toFixed(1) + '%';
+      document.getElementById('roi-gauge-value').textContent = totalRoi.toFixed(0) + '%';
+    }
+    
+    // Real-time calculations
+    function updateCalculations() {
+      const propertyPrice = parseFloat(document.getElementById('calculator_property_price').value) || 500000;
+      const downPayment = parseFloat(document.getElementById('calculator_down_payment').value) || 100000;
+      const closingCosts = parseFloat(document.getElementById('calculator_closing_costs').value) || 15000;
+      const renovationCosts = parseFloat(document.getElementById('calculator_renovation_costs').value) || 25000;
+      const interestRate = parseFloat(document.getElementById('calculator_interest_rate').value) || 4.5;
+      const loanTerm = parseInt(document.getElementById('calculator_loan_term').value) || 30;
+      const monthlyRental = parseFloat(document.getElementById('calculator_monthly_rental').value) || 2500;
+      const otherIncome = parseFloat(document.getElementById('calculator_other_income').value) || 200;
+      const occupancyRate = parseFloat(document.getElementById('calculator_occupancy_rate').value) || 95;
+      const propertyTax = parseFloat(document.getElementById('calculator_property_tax').value) || 2000;
+      const insurance = parseFloat(document.getElementById('calculator_insurance').value) || 1200;
+      const maintenance = parseFloat(document.getElementById('calculator_maintenance').value) || 2400;
+      const managementFees = parseFloat(document.getElementById('calculator_management_fees').value) || 3000;
+      const utilities = parseFloat(document.getElementById('calculator_utilities').value) || 1200;
+      const otherExpenses = parseFloat(document.getElementById('calculator_other_expenses').value) || 1000;
+      const vacancyRate = parseFloat(document.getElementById('calculator_vacancy_rate').value) || 5;
+      const appreciationRate = parseFloat(document.getElementById('calculator_appreciation_rate').value) || 3;
+      const rentalGrowthRate = parseFloat(document.getElementById('calculator_rental_growth_rate').value) || 2;
+      const holdingPeriod = parseInt(document.getElementById('calculator_holding_period').value) || 10;
+      
+      // Currency selection
+      const currencyType = document.querySelector('input[name="currency_type"]:checked').value;
+      const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+      
+      // Calculate loan amount
+      const loanAmount = propertyPrice - downPayment;
+      
+      // Update down payment percentage and loan amount display
+      const downPaymentPercentage = ((downPayment / propertyPrice) * 100).toFixed(1);
+      document.getElementById('down-payment-percentage').textContent = `${downPaymentPercentage}% of purchase price`;
+      document.getElementById('loan-amount').textContent = `Loan: ${currencySymbol} ${loanAmount.toLocaleString()}`;
+      
+      // Calculate initial investment
+      const initialInvestment = downPayment + closingCosts + renovationCosts;
+      document.getElementById('initial-investment').textContent = `${currencySymbol} ${initialInvestment.toLocaleString()}`;
+      
+      // Calculate annual rental income
+      const annualRental = monthlyRental * 12;
+      document.getElementById('annual-rental').textContent = `Annual: ${currencySymbol} ${annualRental.toLocaleString()}`;
+      
+      // Calculate effective annual income
+      const effectiveAnnualRental = annualRental * (occupancyRate / 100);
+      const effectiveAnnualOtherIncome = otherIncome * 12;
+      const effectiveAnnualIncome = effectiveAnnualRental + effectiveAnnualOtherIncome;
+      document.getElementById('effective-annual-income').textContent = `${currencySymbol} ${effectiveAnnualIncome.toLocaleString()}`;
+      
+      // Calculate annual operating expenses
+      const annualOperatingExpenses = propertyTax + insurance + maintenance + managementFees + utilities + otherExpenses;
+      document.getElementById('annual-operating-expenses').textContent = `${currencySymbol} ${annualOperatingExpenses.toLocaleString()}`;
+      
+      // Calculate vacancy cost
+      const vacancyCost = annualRental * (vacancyRate / 100);
+      document.getElementById('vacancy-cost').textContent = `${currencySymbol} ${vacancyCost.toLocaleString()}`;
+      
+      // Calculate monthly expense for badge
+      const monthlyExpense = annualOperatingExpenses / 12;
+      document.getElementById('monthly-expense-badge').textContent = `${currencySymbol} ${monthlyExpense.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+      
+      // Calculate mortgage payment
+      function calculateMortgagePayment(loan, rate, term) {
+        const monthlyRate = rate / 100 / 12;
+        const totalMonths = term * 12;
+        if (loan <= 0 || monthlyRate <= 0 || totalMonths <= 0) return 0;
+        const x = Math.pow(1 + monthlyRate, totalMonths);
+        return (loan * x * monthlyRate) / (x - 1);
+      }
+      
+      const monthlyMortgagePayment = calculateMortgagePayment(loanAmount, interestRate, loanTerm);
+      const annualMortgagePayment = monthlyMortgagePayment * 12;
+      
+      // Calculate NOI and cash flow
+      const totalAnnualExpenses = annualOperatingExpenses + vacancyCost;
+      const NOI = effectiveAnnualIncome - totalAnnualExpenses;
+      const annualCashFlow = NOI - annualMortgagePayment;
+      const monthlyCashFlow = annualCashFlow / 12;
+      
+      // Calculate ROI metrics
+      const cashOnCashReturn = (annualCashFlow / initialInvestment) * 100;
+      const capRate = (NOI / propertyPrice) * 100;
+      
+      // Calculate debt service coverage ratio
+      const DSCR = NOI / annualMortgagePayment;
+      
+      // Calculate gross yield
+      const grossYield = (annualRental / propertyPrice) * 100;
+      
+      // Calculate total ROI over holding period
+      const futurePropertyValue = propertyPrice * Math.pow(1 + (appreciationRate / 100), holdingPeriod);
+      const estimatedEquityGain = futurePropertyValue - propertyPrice;
+      const estimatedCashFlowGain = annualCashFlow * holdingPeriod;
+      const estimatedPrincipalPaidDown = loanAmount * 0.3; // Simplified estimate of principal paid down
+      const totalProfit = estimatedEquityGain + estimatedCashFlowGain + estimatedPrincipalPaidDown;
+      const totalROI = (totalProfit / initialInvestment) * 100;
+      
+      // Update quick metrics display
+      document.getElementById('quick-coc-return').textContent = `${cashOnCashReturn.toFixed(2)}%`;
+      document.getElementById('quick-cap-rate').textContent = `${capRate.toFixed(2)}%`;
+      document.getElementById('quick-monthly-cf').textContent = `${currencySymbol} ${monthlyCashFlow.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+      
+      // Update detailed metrics if they exist
+      if (document.getElementById('detailed-coc-return')) {
+        document.getElementById('detailed-coc-return').textContent = `${cashOnCashReturn.toFixed(2)}%`;
+        document.getElementById('detailed-cap-rate').textContent = `${capRate.toFixed(2)}%`;
+        document.getElementById('detailed-monthly-cf').textContent = `${currencySymbol} ${monthlyCashFlow.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+        document.getElementById('detailed-dscr').textContent = DSCR.toFixed(1);
+        document.getElementById('detailed-yield').textContent = `${grossYield.toFixed(1)}%`;
+        document.getElementById('detailed-roi').textContent = `${totalROI.toFixed(1)}%`;
+        
+        // Update progress bars
+        document.getElementById('coc-return-bar').style.width = `${Math.min(cashOnCashReturn * 10, 100)}%`;
+        document.getElementById('cap-rate-bar').style.width = `${Math.min(capRate * 15, 100)}%`;
+        document.getElementById('cash-flow-bar').style.width = `${Math.min((monthlyCashFlow / 1000) * 100, 100)}%`;
+        document.getElementById('dscr-bar').style.width = `${Math.min(DSCR * 50, 100)}%`;
+        document.getElementById('yield-bar').style.width = `${Math.min(grossYield * 10, 100)}%`;
+        document.getElementById('roi-bar').style.width = `${Math.min(totalROI / 100 * 100, 100)}%`;
+        
+        // Update badges
+        updateMetricBadges('coc-rating-badge-detailed', cashOnCashReturn, 3, 5, 8);
+        updateMetricBadges('cap-rating-badge-detailed', capRate, 3, 4, 6);
+        updateMetricBadges('cash-flow-badge-detailed', monthlyCashFlow, 0, 300, 800);
+        updateMetricBadges('dscr-badge', DSCR, 1, 1.2, 1.5);
+        updateMetricBadges('yield-badge', grossYield, 4, 6, 8);
+        updateMetricBadges('roi-badge', totalROI, 40, 60, 80);
+      }
+      
+      // Update simple view metric badges
+      updateMetricBadges('coc-rating-badge', cashOnCashReturn, 3, 5, 8);
+      updateMetricBadges('cap-rating-badge', capRate, 3, 4, 6);
+      updateMetricBadges('cash-flow-badge', monthlyCashFlow, 0, 300, 800);
+      
+      // Update projections tab metrics
+      document.getElementById('cash-on-cash-return').textContent = `${cashOnCashReturn.toFixed(2)}%`;
+      document.getElementById('monthly-cash-flow').textContent = `${currencySymbol} ${monthlyCashFlow.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+      document.getElementById('total-roi').textContent = `${totalROI.toFixed(2)}%`;
+      
+      // Update projection chart values
+      updateProjectionCharts();
+      
+      // Update gauge charts
+      updateGaugeCharts(cashOnCashReturn, totalROI);
+      
+      // Update display for property price and rent in projections tab
+      document.querySelectorAll('.property-price').forEach(el => {
+        el.textContent = `${currencySymbol} ${propertyPrice.toLocaleString()}`;
+      });
+      
+      document.querySelectorAll('.monthly-rental').forEach(el => {
+        el.textContent = `${currencySymbol} ${monthlyRental.toLocaleString()}`;
+      });
+      
+      document.querySelectorAll('.appreciation-rate').forEach(el => {
+        el.textContent = `${appreciationRate.toFixed(2)}%`;
+      });
+      
+      document.querySelectorAll('.rental-growth-rate').forEach(el => {
+        el.textContent = `${rentalGrowthRate.toFixed(2)}%`;
+      });
+      
+      // Update ratings
+      updateRatingLabels('coc-rating', cashOnCashReturn, 3, 5, 8);
+      updateRatingLabels('cash-flow-rating', monthlyCashFlow, 0, 300, 800);
+      updateRatingLabels('total-roi-rating', totalROI, 40, 60, 80);
+    }
+    
+    // Update metric badges with appropriate colors
+    function updateMetricBadges(className, value, poor, fair, good) {
+      const badges = document.querySelectorAll(`.${className}`);
+      
+      badges.forEach(badge => {
+        badge.classList.remove('bg-danger', 'bg-warning', 'bg-success', 'bg-primary');
+        
+        if (value < poor) {
+          badge.classList.add('bg-danger');
+          badge.textContent = 'Poor';
+        } else if (value < fair) {
+          badge.classList.add('bg-warning');
+          badge.textContent = 'Fair';
+        } else if (value < good) {
+          badge.classList.add('bg-success');
+          badge.textContent = 'Good';
+        } else {
+          badge.classList.add('bg-primary');
+          badge.textContent = 'Excellent';
+        }
+        
+        // Special case for cash flow
+        if (className.includes('cash-flow') && value < 0) {
+          badge.classList.add('bg-danger');
+          badge.textContent = 'Negative';
+        } else if (className.includes('cash-flow') && value >= 0) {
+          badge.textContent = 'Positive';
+        }
+      });
+    }
+    
+    // Update rating labels
+    function updateRatingLabels(className, value, poor, fair, good) {
+      const ratings = document.querySelectorAll(`.${className}`);
+      
+      ratings.forEach(rating => {
+        rating.classList.remove('bg-danger', 'bg-warning', 'bg-success', 'bg-primary');
+        
+        if (value < poor) {
+          rating.classList.add('bg-danger');
+          rating.textContent = 'Poor';
+        } else if (value < fair) {
+          rating.classList.add('bg-warning');
+          rating.textContent = 'Fair';
+        } else if (value < good) {
+          rating.classList.add('bg-success');
+          rating.textContent = 'Good';
+        } else {
+          rating.classList.add('bg-primary');
+          rating.textContent = 'Excellent';
+        }
+        
+        // Special case for cash flow
+        if (className === 'cash-flow-rating' && value < 0) {
+          rating.classList.add('bg-danger');
+          rating.textContent = 'Negative';
+        } else if (className === 'cash-flow-rating' && value >= 0) {
+          rating.textContent = 'Positive';
+        }
+      });
+    }
+    
+    // Reset button functionality
+    const resetButton = document.querySelector('.reset-btn');
+    const calculatorForm = document.querySelector('form');
+    
+    if (resetButton && calculatorForm) {
+      resetButton.addEventListener('click', function(event) {
+        // Prevent the default reset behavior temporarily
+        event.preventDefault();
+        
+        // Show confirmation dialog
+        if (confirm('Reset all values to default?')) {
+          // Reset the form
+          calculatorForm.reset();
+          
+          // Remove validation classes that might have been added
+          calculatorForm.classList.remove('was-validated');
+          
+          // Set default values for currency
+          document.getElementById('currency_myr').checked = true;
+          document.getElementById('currency_toggle').checked = false;
+          
+          // Force update calculations with default values
+          setTimeout(function() {
+            // Clear required fields (make them blank)
+            document.getElementById('calculator_property_price').value = '';
+            document.getElementById('calculator_down_payment').value = '';
+            document.getElementById('calculator_interest_rate').value = '';
+            document.getElementById('calculator_monthly_rental').value = '';
+            
+            // Reset to default values for other fields
+            document.getElementById('calculator_closing_costs').value = '15000';
+            document.getElementById('calculator_renovation_costs').value = '25000';
+            document.getElementById('calculator_loan_term').value = '30';
+            document.getElementById('calculator_holding_period').value = '10';
+            document.getElementById('calculator_other_income').value = '200';
+            document.getElementById('calculator_occupancy_rate').value = '95';
+            document.getElementById('calculator_property_tax').value = '2000';
+            document.getElementById('calculator_insurance').value = '1200';
+            document.getElementById('calculator_maintenance').value = '2400';
+            document.getElementById('calculator_management_fees').value = '3000';
+            document.getElementById('calculator_utilities').value = '1200';
+            document.getElementById('calculator_other_expenses').value = '1000';
+            document.getElementById('calculator_vacancy_rate').value = '5';
+            document.getElementById('calculator_appreciation_rate').value = '3';
+            document.getElementById('calculator_rental_growth_rate').value = '2';
+            
+            // Reset sliders
+            document.querySelectorAll('input[type="range"]').forEach(slider => {
+              slider.value = slider.defaultValue;
+            });
+            
+            // Reset badges
+            document.querySelectorAll('.badge').forEach(badge => {
+              if (badge.classList.contains('interest-rate-badge')) {
+                badge.textContent = '4.5%';
+              } else if (badge.classList.contains('monthly-rental-badge')) {
+                badge.textContent = 'RM 2,500';
+              } else if (badge.classList.contains('occupancy-rate-badge')) {
+                badge.textContent = '95%';
+              } else if (badge.classList.contains('rental-growth-badge')) {
+                badge.textContent = '2.0%';
+              } else if (badge.classList.contains('vacancy-rate-badge')) {
+                badge.textContent = '5%';
+              } else if (badge.classList.contains('appreciation-rate-badge')) {
+                badge.textContent = '3.0%';
+              } else if (badge.classList.contains('holding-period-badge')) {
+                badge.textContent = '10 years';
+              }
+            });
+            
+            // Reset loan term buttons
+            document.getElementById('loan_term_30').checked = true;
+            
+            // Also navigate to the first tab
+            navigateToTab('property');
+            
+            // Reset visualizations
+            updateOccupancyUnits(95);
+            updateVacancyVisualization(5);
+            updateDownPaymentProgressBar(20);
+            
+            // Update all charts
+            updateExpenseCharts();
+            updateRentalGrowthChart();
+            updateProjectionCharts();
+            
+            // Update all calculations with default values
+            updateCalculations();
+          }, 10);
+        }
+      });
+    }
+    
+    // Initial calculation
+    updateCalculations();
+  });
+</script>

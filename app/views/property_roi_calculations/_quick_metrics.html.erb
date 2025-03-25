@@ -1,0 +1,182 @@
+<!-- app/views/property_roi_calculations/_quick_metrics.html.erb -->
+
+<div class="mb-4" id="quick-metrics-card">
+  <div class="card shadow-sm border-0">
+    <div class="card-body py-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-title text-orange-800 fw-semibold mb-0">Key Metrics</h5>
+        <div class="metrics-buttons">
+          <button class="btn btn-sm btn-outline-orange toggle-detailed-metrics">
+            <i class="fas fa-chart-line me-1"></i> Detailed View
+          </button>
+        </div>
+      </div>
+      
+      <!-- Simple View (default) -->
+      <div class="simple-metrics-view">
+        <div class="row">
+          <!-- Cash-on-Cash Return -->
+          <div class="col-md-4 mb-2">
+            <div class="metric-card p-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-orange-700 mb-1">Cash-on-Cash Return</div>
+                  <div class="d-flex align-items-center">
+                    <span class="fw-bold fs-5" id="quick-coc-return">5.23%</span>
+                    <span class="badge ms-2 coc-rating-badge bg-success">Good</span>
+                  </div>
+                </div>
+                <div class="metric-icon">
+                  <i class="fas fa-percentage text-orange-400"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Cap Rate -->
+          <div class="col-md-4 mb-2">
+            <div class="metric-card p-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-orange-700 mb-1">Cap Rate</div>
+                  <div class="d-flex align-items-center">
+                    <span class="fw-bold fs-5" id="quick-cap-rate">3.78%</span>
+                    <span class="badge ms-2 cap-rating-badge bg-warning">Fair</span>
+                  </div>
+                </div>
+                <div class="metric-icon">
+                  <i class="fas fa-chart-pie text-orange-400"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Monthly Cash Flow -->
+          <div class="col-md-4 mb-2">
+            <div class="metric-card p-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="text-orange-700 mb-1">Monthly Cash Flow</div>
+                  <div class="d-flex align-items-center">
+                    <span class="fw-bold fs-5" id="quick-monthly-cf">RM 612</span>
+                    <span class="badge ms-2 cash-flow-badge bg-success">Positive</span>
+                  </div>
+                </div>
+                <div class="metric-icon">
+                  <i class="fas fa-money-bill-wave text-orange-400"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Detailed View (hidden by default) -->
+      <div class="detailed-metrics-view" style="display: none;">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <div class="metric-card p-2">
+              <div class="text-orange-700 mb-1">Cash-on-Cash Return</div>
+              <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar coc-return-progress" role="progressbar" style="width: 52%;" id="coc-return-bar"></div>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="fw-bold" id="detailed-coc-return">5.23%</span>
+                <span class="badge coc-rating-badge-detailed bg-success">Good</span>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <small class="text-muted">Poor (<3%)</small>
+                <small class="text-muted">Excellent (>8%)</small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <div class="metric-card p-2">
+              <div class="text-orange-700 mb-1">Cap Rate</div>
+              <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar cap-rate-progress" role="progressbar" style="width: 38%;" id="cap-rate-bar"></div>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="fw-bold" id="detailed-cap-rate">3.78%</span>
+                <span class="badge cap-rating-badge-detailed bg-warning">Fair</span>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <small class="text-muted">Poor (<3%)</small>
+                <small class="text-muted">Excellent (>6%)</small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <div class="metric-card p-2">
+              <div class="text-orange-700 mb-1">Monthly Cash Flow</div>
+              <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar cash-flow-progress" role="progressbar" style="width: 61%;" id="cash-flow-bar"></div>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="fw-bold" id="detailed-monthly-cf">RM 612</span>
+                <span class="badge cash-flow-badge-detailed bg-success">Positive</span>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <small class="text-muted">Negative</small>
+                <small class="text-muted">RM 1,000+</small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <div class="metric-card p-2">
+              <div class="text-orange-700 mb-1">Debt Service Ratio</div>
+              <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar dscr-progress" role="progressbar" style="width: 65%;" id="dscr-bar"></div>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="fw-bold" id="detailed-dscr">1.3</span>
+                <span class="badge dscr-badge bg-success">Good</span>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <small class="text-muted">Poor (<1.0)</small>
+                <small class="text-muted">Excellent (>1.5)</small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <div class="metric-card p-2">
+              <div class="text-orange-700 mb-1">Gross Yield</div>
+              <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar yield-progress" role="progressbar" style="width: 60%;" id="yield-bar"></div>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="fw-bold" id="detailed-yield">6.0%</span>
+                <span class="badge yield-badge bg-success">Good</span>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <small class="text-muted">Poor (<4%)</small>
+                <small class="text-muted">Excellent (>8%)</small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4 mb-3">
+            <div class="metric-card p-2">
+              <div class="text-orange-700 mb-1">10-Year ROI</div>
+              <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar roi-progress" role="progressbar" style="width: 78%;" id="roi-bar"></div>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="fw-bold" id="detailed-roi">78.5%</span>
+                <span class="badge roi-badge bg-success">Excellent</span>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <small class="text-muted">Poor (<40%)</small>
+                <small class="text-muted">Excellent (>70%)</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

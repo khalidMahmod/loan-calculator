@@ -1,0 +1,54 @@
+<!-- app/views/property_roi_calculations/new.html.erb -->
+
+<div class="container-fluid p-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="card shadow rounded-3 border-0">
+        <div class="card-header bg-orange-600 text-white d-flex align-items-center">
+          <i class="fas fa-chart-line me-2"></i>
+          <h3 class="mb-0 fw-bold">Property Investment ROI Calculator</h3>
+        </div>
+        
+        <div class="card-body px-4 py-4">
+          <!-- Progress indicator -->
+          <%= render 'progress_steps' %>
+          
+          <!-- Tab navigation -->
+          <%= render 'tab_navigation' %>
+          
+          <%= form_with model: @calculator, url: property_roi_calculate_path, local: true, scope: :calculator, html: { class: "needs-validation", novalidate: true } do |f| %>
+            <div class="tab-content" id="calculatorTabContent">
+              <!-- Property Information Tab -->
+              <%= render 'property_tab', f: f %>
+              
+              <!-- Income Information Tab -->
+              <%= render 'income_tab', f: f %>
+              
+              <!-- Expenses Information Tab -->
+              <%= render 'expenses_tab', f: f %>
+              
+              <!-- Projections Information Tab -->
+              <%= render 'projections_tab', f: f %>
+            </div>
+            
+            <!-- Quick ROI Metrics (shown on all tabs except projections) -->
+            <%= render 'quick_metrics' %>
+            
+            <!-- Original buttons (hidden and replaced by tab-specific buttons) -->
+            <div class="d-flex justify-content-between mt-4 form-buttons-container" style="display: none !important;">
+              <button type="reset" class="btn btn-outline-secondary">
+                <i class="fas fa-undo me-1"></i> Reset
+              </button>
+              <button type="submit" class="btn btn-orange-600 text-white">
+                <i class="fas fa-calculator me-1"></i> Calculate Complete ROI
+              </button>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%= render 'styles' %>
+<%= render 'scripts' %>

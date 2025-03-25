@@ -1,0 +1,191 @@
+<!-- app/views/property_roi_calculations/_property_tab.html.erb -->
+
+<div class="tab-pane fade show active" id="property" role="tabpanel" aria-labelledby="property-tab">
+  <div class="bg-orange-50 p-4 rounded-3 mb-4">
+    <h4 class="mb-3 text-orange-800">Property Information</h4>
+    
+    <div class="row g-3">
+      <div class="col-md-12">
+        <div class="row align-items-center mb-2">
+          <div class="col">
+            <label class="form-label text-orange-700 fw-medium">Purchase Price</label>
+          </div>
+          <div class="col-auto">
+            <!-- Modern toggle switch for currency -->
+            <div class="currency-toggle-container">
+              <div class="form-check form-switch form-check-inline">
+                <input class="currency-toggle" type="checkbox" id="currency_toggle">
+                <label class="currency-toggle-label" for="currency_toggle">
+                  <span class="currency-option currency-myr active">MYR</span>
+                  <span class="currency-option currency-usd">USD</span>
+                </label>
+                <!-- Hidden original radio buttons (for data binding) -->
+                <input class="form-check-input d-none" type="radio" name="currency_type" id="currency_myr" value="MYR" checked>
+                <input class="form-check-input d-none" type="radio" name="currency_type" id="currency_usd" value="USD">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="input-group mb-3">
+          <span class="input-group-text currency-symbol">RM</span>
+          <%= f.number_field :property_price, class: "form-control", placeholder: "Property Price", step: "0.01", required: true, 
+              data: { bs_toggle: "tooltip" }, title: "Enter the purchase price of the property" %>
+        </div>
+        <div class="slider-container">
+          <input type="range" class="form-range property-price-slider" min="100000" max="2000000" step="10000" value="500000">
+          <div class="d-flex justify-content-between">
+            <small class="text-muted">100k</small>
+            <small class="text-muted">1M</small>
+            <small class="text-muted">2M</small>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-12">
+        <label class="form-label text-orange-700 fw-medium">Closing Costs</label>
+        <div class="input-group">
+          <span class="input-group-text currency-symbol">RM</span>
+          <%= f.number_field :closing_costs, class: "form-control", placeholder: "Closing Costs", step: "0.01", value: 15000 %>
+          <span class="input-group-text closing-costs-percentage">3%</span>
+        </div>
+        <div class="slider-container mt-2">
+          <input type="range" class="form-range closing-costs-slider" min="0" max="50000" step="1000" value="15000">
+        </div>
+      </div>
+      
+      <div class="col-md-12">
+        <label class="form-label text-orange-700 fw-medium">Down Payment</label>
+        <div class="input-group">
+          <span class="input-group-text currency-symbol">RM</span>
+          <%= f.number_field :down_payment, class: "form-control", placeholder: "Down Payment", step: "0.01", required: true %>
+          <span class="input-group-text" id="down-payment-percentage-badge">20%</span>
+        </div>
+        <div class="slider-container mt-2">
+          <input type="range" class="form-range down-payment-slider" min="10" max="90" step="5" value="20">
+          <div class="d-flex justify-content-between">
+            <small class="text-muted">10%</small>
+            <small class="text-muted">50%</small>
+            <small class="text-muted">90%</small>
+          </div>
+        </div>
+        <div class="mt-2">
+          <div class="loan-visualization">
+            <div class="progress loan-progress" style="height: 24px;">
+              <div class="progress-bar bg-orange-500" role="progressbar" style="width: 20%;" id="down-payment-progress">Down Payment</div>
+              <div class="progress-bar bg-orange-300" role="progressbar" style="width: 80%;" id="loan-amount-progress">Loan Amount</div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between mt-1">
+            <small class="text-orange-600" id="down-payment-percentage">20% of purchase price</small>
+            <small class="text-orange-600" id="loan-amount">Loan: RM 400,000</small>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <label class="form-label text-orange-700 fw-medium d-flex justify-content-between">
+          <span>Interest Rate (%)</span>
+          <span class="badge bg-orange-600 interest-rate-badge">4.5%</span>
+        </label>
+        <div class="slider-container">
+          <%= f.range_field :interest_rate, class: "form-range interest-rate-slider", min: "1", max: "10", step: "0.1", value: "4.5", required: true %>
+          <div class="d-flex justify-content-between">
+            <small class="text-muted">1%</small>
+            <small class="text-muted">5%</small>
+            <small class="text-muted">10%</small>
+          </div>
+        </div>
+        <div class="interest-rate-input-container d-none">
+          <%= f.number_field :interest_rate, class: "form-control", placeholder: "Interest Rate", step: "0.01", required: true %>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <label class="form-label text-orange-700 fw-medium">Loan Term (years)</label>
+        <div class="btn-group loan-term-toggle w-100" role="group">
+          <% [10, 15, 20, 25, 30, 35].each do |term| %>
+            <input type="radio" class="btn-check" name="loan_term_toggle" id="loan_term_<%= term %>" value="<%= term %>" <%= term == 30 ? 'checked' : '' %>>
+            <label class="btn btn-outline-orange" for="loan_term_<%= term %>"><%= term %></label>
+          <% end %>
+        </div>
+        <div class="loan-term-input-container d-none">
+          <%= f.select :loan_term, options_for_select([10, 15, 20, 25, 30, 35], 30), {}, class: "form-select", required: true %>
+        </div>
+      </div>
+      
+      <div class="col-md-12">
+        <label class="form-label text-orange-700 fw-medium">Renovation Costs</label>
+        <div class="input-group">
+          <span class="input-group-text currency-symbol">RM</span>
+          <%= f.number_field :renovation_costs, class: "form-control", placeholder: "Renovation Costs", step: "0.01", value: 25000 %>
+          <span class="input-group-text renovation-costs-percentage">5%</span>
+        </div>
+        <div class="slider-container mt-2">
+          <input type="range" class="form-range renovation-costs-slider" min="0" max="100000" step="1000" value="25000">
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <label class="form-label text-orange-700 fw-medium d-flex justify-content-between">
+          <span>Annual Value Growth (%)</span>
+          <span class="badge bg-orange-600 appreciation-rate-badge">3.0%</span>
+        </label>
+        <div class="slider-container">
+          <%= f.range_field :appreciation_rate, class: "form-range appreciation-rate-slider", min: "0", max: "10", step: "0.1", value: "3" %>
+          <div class="d-flex justify-content-between">
+            <small class="text-muted">0%</small>
+            <small class="text-muted">5%</small>
+            <small class="text-muted">10%</small>
+          </div>
+        </div>
+        <div class="appreciation-rate-input-container d-none">
+          <%= f.number_field :appreciation_rate, class: "form-control", placeholder: "Property Appreciation Rate", step: "0.1", value: 3 %>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <label class="form-label text-orange-700 fw-medium">Holding Period (years)</label>
+        <div class="slider-container">
+          <div class="d-flex align-items-center">
+            <%= f.range_field :holding_period, class: "form-range holding-period-slider", min: "1", max: "30", step: "1", value: "10", required: true %>
+            <span class="ms-2 badge bg-orange-600 holding-period-badge">10 years</span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <small class="text-muted">1yr</small>
+            <small class="text-muted">15yrs</small>
+            <small class="text-muted">30yrs</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mt-4 p-3 bg-orange-100 rounded-3">
+      <h5 class="text-orange-800 fw-semibold mb-1">Initial Investment</h5>
+      <div class="d-flex justify-content-between align-items-center">
+        <p class="fs-4 fw-bold text-orange-600 mb-0" id="initial-investment">RM 140,000</p>
+        <div class="investment-breakdown-btn" data-bs-toggle="tooltip" title="Show investment breakdown">
+          <i class="fas fa-chart-pie"></i>
+        </div>
+      </div>
+      <p class="small text-orange-700 mt-1">Down payment + Closing costs + Renovation costs</p>
+      
+      <!-- Investment breakdown chart (hidden by default) -->
+      <div class="investment-breakdown-chart mt-3" style="display: none;">
+        <div class="chart-container" style="height: 200px; position: relative;">
+          <canvas id="investmentBreakdownChart"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Add Next button -->
+    <div class="d-flex justify-content-between mt-4">
+      <button type="reset" class="btn btn-outline-secondary reset-btn">
+        <i class="fas fa-undo me-1"></i> Reset
+      </button>
+      <button type="button" class="btn btn-orange-600 text-white next-tab">
+        Continue to Income <i class="fas fa-arrow-right ms-1"></i>
+      </button>
+    </div>
+  </div>
+</div>

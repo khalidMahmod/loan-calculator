@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="<%= form_authenticity_token %>">
+  <title>Property Affordability Calculator</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* Custom color classes for the orange theme */
+    :root {
+      --orange-50: #fff8f1;
+      --orange-100: #ffe8cc;
+      --orange-200: #ffd8a8;
+      --orange-600: #fd7e14;
+      --orange-700: #e76b08;
+      --orange-800: #cc5803;
+    }
+    
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .bg-orange-50 {
+      background-color: var(--orange-50);
+    }
+    
+    .bg-orange-100 {
+      background-color: var(--orange-100);
+    }
+    
+    .bg-orange-200 {
+      background-color: var(--orange-200);
+    }
+    
+    .bg-orange-600 {
+      background-color: var(--orange-600);
+    }
+    
+    .text-orange-600 {
+      color: var(--orange-600);
+    }
+    
+    .text-orange-700 {
+      color: var(--orange-700);
+    }
+    
+    .text-orange-800 {
+      color: var(--orange-800);
+    }
+    
+    .btn-orange-600 {
+      background-color: var(--orange-600);
+      border-color: var(--orange-600);
+      color: white;
+    }
+    
+    .btn-orange-600:hover {
+      background-color: var(--orange-700);
+      border-color: var(--orange-700);
+      color: white;
+    }
+
+    .card {
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+      margin-bottom: 30px;
+    }
+
+    .card-header {
+      padding: 1.25rem 1.5rem;
+    }
+
+    .slider-container {
+      padding: 0 10px;
+      margin-bottom: 25px;
+    }
+
+    .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 5px;
+      background: var(--orange-100);
+      outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%; 
+      background: var(--orange-600);
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--orange-600);
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .input-with-icon {
+      position: relative;
+    }
+
+    .input-with-icon i {
+      position: absolute;
+      left: 15px;
+      top: 13px;
+      color: var(--orange-700);
+    }
+
+    .input-with-icon input {
+      padding-left: 40px;
+    }
+
+    .form-control, .form-select {
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: 1px solid #ced4da;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--orange-600);
+      box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.25);
+    }
+
+    .dependent-btn {
+      padding: 12px 0;
+      border-radius: 10px;
+      transition: all 0.2s;
+      background-color: var(--orange-100);
+      border: none;
+      color: var(--orange-800);
+    }
+
+    .dependent-btn.active {
+      background-color: var(--orange-600);
+      color: white;
+    }
+
+    .dsr-btn {
+      padding: 12px 0;
+      border-radius: 10px;
+      transition: all 0.2s;
+      background-color: var(--orange-100);
+      border: none;
+      color: var(--orange-800);
+    }
+
+    .dsr-btn.active {
+      background-color: var(--orange-600);
+      color: white;
+    }
+
+    .slider-value {
+      display: flex;
+      justify-content: space-between;
+      color: var(--orange-700);
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+
+    .summary-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--orange-600);
+      margin-bottom: 0;
+    }
+
+    .summary-label {
+      color: var(--orange-700);
+      font-size: 0.9rem;
+    }
+
+    .info-box {
+      background-color: var(--orange-100);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      margin-bottom: 20px;
+      color: var(--orange-800);
+      font-weight: 600;
+    }
+
+    .input-group-text {
+      background-color: var(--orange-50);
+      color: var(--orange-700);
+      border-right: none;
+      border-top-left-radius: 10px;
+      border-bottom-left-radius: 10px;
+    }
+
+    .currency-input {
+      border-left: none;
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
+    }
+
+    .currency-dropdown {
+      min-width: 85px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card shadow border-0">
+          <div class="card-header bg-orange-600 text-white d-flex align-items-center">
+            <i class="fas fa-home me-2"></i>
+            <h3 class="mb-0 fw-bold">Property Affordability Calculator</h3>
+          </div>
+          <div class="card-body p-4">
+            <p class="lead mb-4">Find out how much property you can afford based on Malaysian lending standards.</p>
+            
+            <form id="affordabilityForm" action="/affordability/calculate" method="post">
+              <!-- Income Section -->
+              <div class="bg-orange-50 p-4 rounded-3 mb-4">
+                <h4 class="section-title"><i class="fas fa-money-bill-wave me-2"></i>Income Information</h4>
+                
+                <div class="row align-items-center mb-4">
+                  <div class="col-md-3">
+                    <label class="form-label text-orange-700 fw-medium">Currency</label>
+                  </div>
+                  <div class="col-md-9">
+                    <select class="form-select currency-dropdown" id="currencySelect">
+                      <option value="MYR" selected>MYR</option>
+                      <option value="USD">USD</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="mb-4">
+                  <label class="form-label text-orange-700 fw-medium">Gross Monthly Income</label>
+                  <div class="input-group">
+                    <span class="input-group-text" id="currency-symbol">RM</span>
+                    <input type="text" class="form-control currency-input" id="primaryIncome" name="affordability_calculator[primary_income]" value="10000">
+                  </div>
+                  <div class="slider-container mt-2">
+                    <input type="range" class="slider" id="primaryIncomeSlider" min="0" max="50000" step="100" value="10000">
+                    <div class="slider-value">
+                      <span>RM 0</span>
+                      <span>RM 50,000</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="mb-4">
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="includeCoApplicant">
+                    <label class="form-check-label text-orange-700 fw-medium" for="includeCoApplicant">
+                      <i class="fas fa-user-friends me-2"></i>Include Co-applicant
+                    </label>
+                  </div>
+                </div>
+                
+                <div class="mb-4">
+                  <label class="form-label text-orange-700 fw-medium">Additional Monthly Income</label>
+                  <div class="input-group">
+                    <span class="input-group-text" id="additional-currency-symbol">RM</span>
+                    <input type="text" class="form-control currency-input" id="additionalIncome" name="affordability_calculator[additional_income]" value="5000">
+                  </div>
+                  <div class="slider-container mt-2">
+                    <input type="range" class="slider" id="additionalIncomeSlider" min="0" max="20000" step="100" value="5000">
+                    <div class="slider-value">
+                      <span>RM 0</span>
+                      <span>RM 20,000</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="info-box">
+                  <h5 class="text-orange-800 fw-semibold mb-2">Total Monthly Income</h5>
+                  <p class="summary-value" id="totalIncomeDisplay">RM 15,000</p>
+                  <p class="summary-label">Combined from all sources</p>
+                </div>
+              </div>
+              
+              <!-- Debt Section -->
+              <div class="bg-orange-50 p-4 rounded-3 mb-4">
+                <h4 class="section-title"><i class="fas fa-credit-card me-2"></i>Existing Debt & Savings</h4>
+                
+                <div class="mb-4">
+                  <label class="form-label text-orange-700 fw-medium">Monthly Debt Payments</label>
+                  <div class="input-group">
+                    <span class="input-group-text" id="debt-currency-symbol">RM</span>
+                    <input type="text" class="form-control currency-input" id="monthlyDebt" name="affordability_calculator[monthly_debt]" value="5000">
+                  </div>
+                  <div class="slider-container mt-2">
+                    <input type="range" class="slider" id="monthlyDebtSlider" min="0" max="20000" step="100" value="5000">
+                    <div class="slider-value">
+                      <span>RM 0</span>
+                      <span>RM 20,000</span>
+                    </div>
+                  </div>
+                  <p class="form-text text-muted mt-2">Include car loans, personal loans, credit cards, etc.</p>
+                </div>
+                
+                <div class="mb-4">
+                  <label class="form-label text-orange-700 fw-medium">Available Down Payment</label>
+                  <div class="input-group">
+                    <span class="input-group-text" id="downpayment-currency-symbol">RM</span>
+                    <input type="text" class="form-control currency-input" id="downPayment" name="affordability_calculator[down_payment_amount]" value="50000">
+                  </div>
+                  <div class="slider-container mt-2">
+                    <input type="range" class="slider" id="downPaymentSlider" min="0" max="500000" step="1000" value="50000">
+                    <div class="slider-value">
+                      <span>RM 0</span>
+                      <span>RM 500,000</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="info-box">
+                  <h5 class="text-orange-800 fw-semibold mb-2">Debt-to-Income Ratio</h5>
+                  <p class="summary-value" id="dtiRatioDisplay">33.3%</p>
+                  <p class="summary-label">Recommended: Below 40% for mortgage approval</p>
+                </div>
+              </div>
+              
+              <!-- Additional Details Section -->
+              <div class="bg-orange-50 p-4 rounded-3 mb-4">
+                <h4 class="section-title"><i class="fas fa-sliders-h me-2"></i>Loan Details</h4>
+                
+                <div class="row mb-4">
+                  <div class="col-md-6 mb-3 mb-md-0">
+                    <label class="form-label text-orange-700 fw-medium">Number of Dependents</label>
+                    <div class="d-flex justify-content-between">
+                      <button type="button" class="dependent-btn flex-grow-1 mx-1 active" data-value="0">0</button>
+                      <button type="button" class="dependent-btn flex-grow-1 mx-1" data-value="1">1</button>
+                      <button type="button" class="dependent-btn flex-grow-1 mx-1" data-value="2">2</button>
+                      <button type="button" class="dependent-btn flex-grow-1 mx-1" data-value="3">3</button>
+                      <button type="button" class="dependent-btn flex-grow-1 mx-1" data-value="4">4</button>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-6">
+                    <label class="form-label text-orange-700 fw-medium">Debt Service Ratio (DSR)</label>
+                    <div class="d-flex justify-content-between">
+                      <button type="button" class="dsr-btn flex-grow-1 mx-1 active" data-value="60">60%</button>
+                      <button type="button" class="dsr-btn flex-grow-1 mx-1" data-value="70">70%</button>
+                      <button type="button" class="dsr-btn flex-grow-1 mx-1" data-value="80">80%</button>
+                    </div>
+                    <p class="form-text text-muted mt-2">Malaysian banks typically use 60-80% DSR</p>
+                  </div>
+                </div>
+                
+                <div class="row mb-4">
+                  <div class="col-md-6 mb-3 mb-md-0">
+                    <label class="form-label text-orange-700 fw-medium">Interest Rate (%)</label>
+                    <input type="number" class="form-control" id="interestRate" name="affordability_calculator[interest_rate]" value="4.5" step="0.1" min="0" max="20">
+                  </div>
+                  
+                  <div class="col-md-6">
+                    <label class="form-label text-orange-700 fw-medium">Loan Term (years)</label>
+                    <select class="form-select" id="loanTerm" name="affordability_calculator[loan_term]">
+                      <option value="10">10 years</option>
+                      <option value="15">15 years</option>
+                      <option value="20">20 years</option>
+                      <option value="25">25 years</option>
+                      <option value="30" selected>30 years</option>
+                      <option value="35">35 years</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Affordability Summary -->
+              <div class="bg-orange-600 p-4 rounded-3 mb-4 text-white">
+                <h4 class="fw-bold mb-3"><i class="fas fa-chart-line me-2"></i>Affordability Summary</h4>
+                
+                <div class="row">
+                  <div class="col-md-8">
+                    <h5 class="fw-semibold">Maximum Affordable Property</h5>
+                    <p class="fs-1 fw-bold" id="maxPropertyDisplay">RM 823,655.74</p>
+                  </div>
+                  <div class="col-md-4">
+                    <h5 class="fw-semibold">Recommended Purchase</h5>
+                    <p class="fs-4 fw-bold" id="recommendedPropertyDisplay">RM 741,290.17</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="reset" class="btn btn-outline-secondary me-md-2">
+                  <i class="fas fa-undo me-1"></i> Reset
+                </button>
+                <button type="submit" id="calculateBtn" class="btn btn-orange-600 text-white">
+                  <i class="fas fa-calculator me-1"></i> Calculate Full Affordability
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Get elements
+      const currencySelect = document.getElementById('currencySelect');
+      const primaryIncomeInput = document.getElementById('primaryIncome');
+      const primaryIncomeSlider = document.getElementById('primaryIncomeSlider');
+      const additionalIncomeInput = document.getElementById('additionalIncome');
+      const additionalIncomeSlider = document.getElementById('additionalIncomeSlider');
+      const monthlyDebtInput = document.getElementById('monthlyDebt');
+      const monthlyDebtSlider = document.getElementById('monthlyDebtSlider');
+      const downPaymentInput = document.getElementById('downPayment');
+      const downPaymentSlider = document.getElementById('downPaymentSlider');
+      const interestRateInput = document.getElementById('interestRate');
+      const loanTermSelect = document.getElementById('loanTerm');
+      const dependentBtns = document.querySelectorAll('.dependent-btn');
+      const dsrBtns = document.querySelectorAll('.dsr-btn');
+      const calculateBtn = document.getElementById('calculateBtn');
+      const resetBtn = document.querySelector('button[type="reset"]');
+      
+      // Display elements
+      const totalIncomeDisplay = document.getElementById('totalIncomeDisplay');
+      const dtiRatioDisplay = document.getElementById('dtiRatioDisplay');
+      const maxPropertyDisplay = document.getElementById('maxPropertyDisplay');
+      const recommendedPropertyDisplay = document.getElementById('recommendedPropertyDisplay');
+      
+      // Currency symbols
+      const currencySymbols = document.querySelectorAll('[id$="-currency-symbol"]');
+      
+      // Variables
+      let dependents = 0;
+      let dsrValue = 60;
+      
+      // Format number as currency
+      function formatCurrency(amount, currency = 'MYR') {
+        const symbol = currency === 'MYR' ? 'RM' : '$';
+        return `${symbol} ${Number(amount).toLocaleString(undefined, {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2
+        })}`;
+      }
+      
+      // Parse currency string to number
+      function parseCurrencyValue(value) {
+        if (typeof value === 'string') {
+          return parseFloat(value.replace(/[^\d.-]/g, '')) || 0;
+        }
+        return parseFloat(value) || 0;
+      }
+      
+      // Sync input and slider values
+      function syncInputAndSlider(input, slider) {
+        const value = parseCurrencyValue(input.value);
+        slider.value = value;
+        input.value = value.toLocaleString();
+      }
+      
+      // Update calculations
+      function updateCalculations() {
+        const currency = currencySelect.value;
+        const symbol = currency === 'MYR' ? 'RM' : '$';
+        
+        // Update currency symbols
+        currencySymbols.forEach(el => {
+          el.textContent = symbol;
+        });
+        
+        // Get values
+        const primaryIncome = parseCurrencyValue(primaryIncomeInput.value);
+        const additionalIncome = parseCurrencyValue(additionalIncomeInput.value);
+        const totalIncome = primaryIncome + additionalIncome;
+        const monthlyDebt = parseCurrencyValue(monthlyDebtInput.value);
+        const downPayment = parseCurrencyValue(downPaymentInput.value);
+        const interestRate = parseFloat(interestRateInput.value);
+        const loanTerm = parseInt(loanTermSelect.value);
+        
+        // Update displays
+        totalIncomeDisplay.textContent = formatCurrency(totalIncome, currency);
+        
+        // Calculate DTI ratio
+        const dtiRatio = totalIncome > 0 ? (monthlyDebt / totalIncome) * 100 : 0;
+        dtiRatioDisplay.textContent = `${dtiRatio.toFixed(1)}%`;
+        
+        // Max mortgage calculation
+        const maxDebtPayment = totalIncome * (dsrValue / 100);
+        const availableForMortgage = Math.max(0, maxDebtPayment - monthlyDebt);
+        
+        function calculateMaxMortgage(payment, rate, term) {
+          const monthlyRate = rate / 100 / 12;
+          const totalMonths = term * 12;
+          if (payment <= 0 || monthlyRate <= 0 || totalMonths <= 0) return 0;
+          const x = Math.pow(1 + monthlyRate, totalMonths);
+          return payment * (x - 1) / (monthlyRate * x);
+        }
+        
+        const maxMortgageAmount = calculateMaxMortgage(availableForMortgage, interestRate, loanTerm);
+        const maxProperty = maxMortgageAmount + downPayment;
+        const recommendedProperty = maxProperty * 0.9; // 90% of max as recommendation
+        
+        maxPropertyDisplay.textContent = formatCurrency(maxProperty, currency);
+        recommendedPropertyDisplay.textContent = formatCurrency(recommendedProperty, currency);
+      }
+      
+      // Event listeners for sliders
+      primaryIncomeSlider.addEventListener('input', function() {
+        primaryIncomeInput.value = this.value.toLocaleString();
+        updateCalculations();
+      });
+      
+      additionalIncomeSlider.addEventListener('input', function() {
+        additionalIncomeInput.value = this.value.toLocaleString();
+        updateCalculations();
+      });
+      
+      monthlyDebtSlider.addEventListener('input', function() {
+        monthlyDebtInput.value = this.value.toLocaleString();
+        updateCalculations();
+      });
+      
+      downPaymentSlider.addEventListener('input', function() {
+        downPaymentInput.value = this.value.toLocaleString();
+        updateCalculations();
+      });
+      
+      // Event listeners for inputs
+      primaryIncomeInput.addEventListener('input', function() {
+        syncInputAndSlider(this, primaryIncomeSlider);
+        updateCalculations();
+      });
+      
+      additionalIncomeInput.addEventListener('input', function() {
+        syncInputAndSlider(this, additionalIncomeSlider);
+        updateCalculations();
+      });
+      
+      monthlyDebtInput.addEventListener('input', function() {
+        syncInputAndSlider(this, monthlyDebtSlider);
+        updateCalculations();
+      });
+      
+      downPaymentInput.addEventListener('input', function() {
+        syncInputAndSlider(this, downPaymentSlider);
+        updateCalculations();
+      });
+      
+      // Currency change
+      currencySelect.addEventListener('change', function() {
+        updateCalculations();
+      });
+      
+      // Interest rate and loan term
+      interestRateInput.addEventListener('input', updateCalculations);
+      loanTermSelect.addEventListener('change', updateCalculations);
+      
+      // Dependent buttons
+      dependentBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          dependentBtns.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          dependents = parseInt(this.getAttribute('data-value'));
+          updateCalculations();
+        });
+      });
+      
+      // DSR buttons
+      dsrBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          dsrBtns.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          dsrValue = parseInt(this.getAttribute('data-value'));
+          updateCalculations();
+        });
+      });
+      
+      // Prepare form data before submit
+      document.getElementById('affordabilityForm').addEventListener('submit', function(e) {
+        // Make sure values are parsed from formatted strings to numbers before submission
+        document.querySelectorAll('input[name^="affordability_calculator"]').forEach(input => {
+          if (input.type === 'text' && input.classList.contains('currency-input')) {
+            input.value = parseCurrencyValue(input.value);
+          }
+        });
+        
+        // Add hidden input for co-applicant income if needed
+        if (document.getElementById('includeCoApplicant').checked) {
+          const coApplicantInput = document.createElement('input');
+          coApplicantInput.type = 'hidden';
+          coApplicantInput.name = 'affordability_calculator[co_applicant_income]';
+          coApplicantInput.value = parseCurrencyValue(additionalIncomeInput.value);
+          this.appendChild(coApplicantInput);
+        } else {
+          const coApplicantInput = document.createElement('input');
+          coApplicantInput.type = 'hidden';
+          coApplicantInput.name = 'affordability_calculator[co_applicant_income]';
+          coApplicantInput.value = '0';
+          this.appendChild(coApplicantInput);
+        }
+        
+        // Add CSRF token if not already present
+        if (!document.querySelector('input[name="authenticity_token"]')) {
+          const csrfMetaTag = document.querySelector('meta[name="csrf-token"]');
+          if (csrfMetaTag) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'authenticity_token';
+            csrfInput.value = csrfMetaTag.getAttribute('content');
+            this.appendChild(csrfInput);
+          }
+        }
+      });
+      
+      // Reset button
+      resetBtn.addEventListener('click', function() {
+        setTimeout(() => {
+          // Reset all inputs to default values
+          primaryIncomeInput.value = "10000";
+          primaryIncomeSlider.value = 10000;
+          additionalIncomeInput.value = "5000";
+          additionalIncomeSlider.value = 5000;
+          monthlyDebtInput.value = "5000";
+          monthlyDebtSlider.value = 5000;
+          downPaymentInput.value = "50000";
+          downPaymentSlider.value = 50000;
+          interestRateInput.value = "4.5";
+          loanTermSelect.value = "30";
+          
+          // Reset buttons
+          dependentBtns.forEach(b => b.classList.remove('active'));
+          dependentBtns[0].classList.add('active');
+          dependents = 0;
+          
+          dsrBtns.forEach(b => b.classList.remove('active'));
+          dsrBtns[0].classList.add('active');
+          dsrValue = 60;
+          
+          // Update calculations
+          updateCalculations();
+        }, 10);
+      });
+      
+      // Initialize
+      updateCalculations();
+    });
+  </script>
+</body>
+</html>

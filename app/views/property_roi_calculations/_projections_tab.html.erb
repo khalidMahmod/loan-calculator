@@ -1,0 +1,214 @@
+<!-- app/views/property_roi_calculations/_projections_tab.html.erb -->
+
+<div class="tab-pane fade" id="projections" role="tabpanel" aria-labelledby="projections-tab">
+  <div class="bg-orange-50 p-4 rounded-3 mb-4">
+    <h4 class="mb-3 text-orange-800">Growth Projections</h4>
+    
+    <!-- Value Projection Chart -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h5 class="text-orange-800 mb-3">10-Year Projection</h5>
+            <div class="chart-container" style="height: 250px; position: relative;">
+              <canvas id="projectionChart"></canvas>
+            </div>
+            <div class="mt-2 text-center">
+              <div class="btn-group chart-data-toggle" role="group">
+                <input type="radio" class="btn-check" name="chart-data-view" id="chart-data-value" autocomplete="off" checked>
+                <label class="btn btn-sm btn-outline-orange" for="chart-data-value">Property Value</label>
+                
+                <input type="radio" class="btn-check" name="chart-data-view" id="chart-data-rental" autocomplete="off">
+                <label class="btn btn-sm btn-outline-orange" for="chart-data-rental">Rental Income</label>
+                
+                <input type="radio" class="btn-check" name="chart-data-view" id="chart-data-cashflow" autocomplete="off">
+                <label class="btn btn-sm btn-outline-orange" for="chart-data-cashflow">Cash Flow</label>
+                
+                <input type="radio" class="btn-check" name="chart-data-view" id="chart-data-all" autocomplete="off">
+                <label class="btn btn-sm btn-outline-orange" for="chart-data-all">All Data</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h6 class="text-orange-800 mb-3">Property Value Growth</h6>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <div class="text-muted mb-1">Initial Value</div>
+                <div class="fw-medium property-price fs-5">RM 500,000</div>
+              </div>
+              <div class="growth-arrow">
+                <i class="fas fa-long-arrow-alt-right fa-2x text-orange-300"></i>
+              </div>
+              <div>
+                <div class="text-muted mb-1">Future Value</div>
+                <div class="fw-medium fs-5" id="future-property-value">RM 671,958</div>
+              </div>
+            </div>
+            <div class="growth-stats">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-orange-700">Annual Growth Rate:</span>
+                <span class="fw-medium appreciation-rate">3.00%</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-orange-700">Total Appreciation:</span>
+                <span class="fw-medium" id="total-appreciation">RM 171,958</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-orange-700">Appreciation %:</span>
+                <span class="fw-medium" id="appreciation-percentage">34.4%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h6 class="text-orange-800 mb-3">Rental Income Growth</h6>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <div class="text-muted mb-1">Initial Monthly</div>
+                <div class="fw-medium monthly-rental fs-5">RM 2,500</div>
+              </div>
+              <div class="growth-arrow">
+                <i class="fas fa-long-arrow-alt-right fa-2x text-orange-300"></i>
+              </div>
+              <div>
+                <div class="text-muted mb-1">Future Monthly</div>
+                <div class="fw-medium fs-5" id="future-monthly-rent">RM 3,047</div>
+              </div>
+            </div>
+            <div class="growth-stats">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-orange-700">Annual Growth Rate:</span>
+                <span class="fw-medium rental-growth-rate">2.00%</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-orange-700">Total Monthly Increase:</span>
+                <span class="fw-medium" id="total-rent-increase">RM 547</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-orange-700">Annual Income Year 10:</span>
+                <span class="fw-medium" id="future-annual-rent">RM 36,564</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mb-4">
+      <h5 class="mb-3 text-orange-800">Return on Investment Metrics</h5>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+              <h6 class="text-orange-700 mb-3">Cash-on-Cash Return</h6>
+              <div class="roi-gauge mb-3">
+                <canvas id="cashOnCashGauge"></canvas>
+                <div class="gauge-value" id="coc-gauge-value">5.2%</div>
+              </div>
+              <p class="fs-4 fw-bold text-orange-600" id="cash-on-cash-return">5.23%</p>
+              <p class="text-muted small mb-0">Annual cash flow ÷ Initial investment</p>
+              <div class="roi-rating mt-2">
+                <span class="badge bg-success coc-rating">Good</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+              <h6 class="text-orange-700 mb-3">Monthly Cash Flow</h6>
+              <div class="cash-flow-indicator mb-3">
+                <i class="fas fa-money-bill-wave cash-flow-icon"></i>
+                <div class="cash-flow-value">RM 612</div>
+              </div>
+              <p class="fs-4 fw-bold text-orange-600" id="monthly-cash-flow">RM 612</p>
+              <p class="text-muted small mb-0">Monthly income after all expenses</p>
+              <div class="roi-rating mt-2">
+                <span class="badge bg-success cash-flow-rating">Positive</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+              <h6 class="text-orange-700 mb-3">Total ROI (10 Years)</h6>
+              <div class="roi-gauge mb-3">
+                <canvas id="totalRoiGauge"></canvas>
+                <div class="gauge-value" id="roi-gauge-value">78%</div>
+              </div>
+              <p class="fs-4 fw-bold text-orange-600" id="total-roi">78.45%</p>
+              <p class="text-muted small mb-0">Total profit ÷ Initial investment</p>
+              <div class="roi-rating mt-2">
+                <span class="badge bg-success total-roi-rating">Excellent</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h5 class="text-orange-800 mb-3">Investment Breakdown</h5>
+            <div class="row">
+              <div class="col-md-5">
+                <div class="investment-summary">
+                  <div class="summary-item d-flex justify-content-between mb-2">
+                    <span class="text-orange-700">Initial Investment:</span>
+                    <span class="fw-medium" id="summary-initial-investment">RM 140,000</span>
+                  </div>
+                  <div class="summary-item d-flex justify-content-between mb-2">
+                    <span class="text-orange-700">Total Cash Flow:</span>
+                    <span class="fw-medium" id="summary-total-cashflow">RM 73,440</span>
+                  </div>
+                  <div class="summary-item d-flex justify-content-between mb-2">
+                    <span class="text-orange-700">Property Appreciation:</span>
+                    <span class="fw-medium" id="summary-appreciation">RM 171,958</span>
+                  </div>
+                  <div class="summary-item d-flex justify-content-between mb-2">
+                    <span class="text-orange-700">Principal Paid Down:</span>
+                    <span class="fw-medium" id="summary-principal">RM 102,400</span>
+                  </div>
+                  <div class="summary-divider my-2"></div>
+                  <div class="summary-item d-flex justify-content-between fw-bold">
+                    <span class="text-orange-700">Total Profit:</span>
+                    <span class="text-orange-600" id="summary-total-profit">RM 347,798</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-7">
+                <div class="chart-container" style="height: 200px; position: relative;">
+                  <canvas id="investmentBreakdownChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Add Back and Submit buttons -->
+    <div class="d-flex justify-content-between mt-4">
+      <button type="button" class="btn btn-outline-secondary back-tab">
+        <i class="fas fa-arrow-left me-1"></i> Back to Expenses
+      </button>
+      <button type="submit" class="btn btn-orange-600 text-white">
+        <i class="fas fa-calculator me-1"></i> Calculate Complete ROI
+      </button>
+    </div>
+  </div>
+</div>

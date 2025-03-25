@@ -1,0 +1,925 @@
+<!-- app/views/mortgage_calculations/new.html.erb -->
+<div class="row justify-content-center">
+  <div class="col-md-10">
+    <div class="card shadow-sm border-0 rounded-3">
+      <div class="card-header bg-orange-600 text-white">
+        <h3 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Mortgage Calculator</h3>
+      </div>
+      <div class="card-body px-4 py-4">
+        <p class="lead">Calculate your monthly mortgage payments and generate amortization schedules.</p>
+
+        <%= form_with model: @calculator, url: mortgage_calculate_path, local: true, html: { class: "needs-validation", novalidate: true } do |f| %>
+
+        <!-- Loan Details Section -->
+        <div class="bg-orange-50 p-4 rounded-3 mb-4">
+          <h4 class="mb-3 text-orange-800">Loan Details</h4>
+
+          <div class="row g-3">
+            <div class="col-md-12">
+              <div class="row align-items-center mb-2">
+                <div class="col">
+                  <label class="form-label text-orange-700 fw-medium">Loan Amount</label>
+                </div>
+                <div class="col-auto">
+                  <!-- Modern toggle switch for currency -->
+                  <div class="currency-toggle-container">
+                    <div class="form-check form-switch form-check-inline">
+                      <input class="currency-toggle" type="checkbox" id="currency_toggle">
+                      <label class="currency-toggle-label" for="currency_toggle">
+                        <span class="currency-option currency-myr active">MYR</span>
+                        <span class="currency-option currency-usd">USD</span>
+                      </label>
+                      <!-- Hidden original radio buttons (for data binding) -->
+                      <input class="form-check-input d-none" type="radio" name="currency_type" id="currency_myr" value="MYR" checked>
+                      <input class="form-check-input d-none" type="radio" name="currency_type" id="currency_usd" value="USD">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="input-group mb-3">
+                <span class="input-group-text currency-symbol">RM</span>
+                <%= f.number_field :loan_amount, class: "form-control", placeholder: "Loan Amount", step: "0.01", required: true, 
+                    data: { bs_toggle: "tooltip" }, title: "Enter the loan amount" %>
+              </div>
+              <div class="slider-container">
+                <input type="range" class="form-range loan-amount-slider" min="100000" max="2000000" step="10000" value="500000">
+                <div class="d-flex justify-content-between">
+                  <small class="text-muted">100k</small>
+                  <small class="text-muted">1M</small>
+                  <small class="text-muted">2M</small>
+                </div>
+              </div>
+              <div class="invalid-feedback">Please enter the loan amount.</div>
+            </div>
+
+            <div class="col-md-12">
+              <label class="form-label text-orange-700 fw-medium d-flex justify-content-between">
+                <span>Down Payment</span>
+                <span class="badge bg-orange-600 down-payment-badge">RM 0</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text currency-symbol">RM</span>
+                <%= f.number_field :down_payment, class: "form-control", placeholder: "Down Payment", step: "0.01", value: 0 %>
+                <span class="input-group-text" id="down-payment-percentage-badge">0%</span>
+              </div>
+              <div class="slider-container mt-2">
+                <input type="range" class="form-range down-payment-slider" min="0" max="50" step="1" value="0">
+                <div class="d-flex justify-content-between">
+                  <small class="text-muted">0%</small>
+                  <small class="text-muted">25%</small>
+                  <small class="text-muted">50%</small>
+                </div>
+              </div>
+
+              <!-- Loan visualization -->
+              <div class="loan-visualization mt-2">
+                <div class="progress loan-progress" style="height: 24px;">
+                  <div class="progress-bar bg-orange-500" role="progressbar" style="width: 0%;" id="down-payment-progress">Down Payment</div>
+                  <div class="progress-bar bg-orange-300" role="progressbar" style="width: 100%;" id="loan-amount-progress">Loan Amount</div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <small class="text-orange-600" id="down-payment-percentage">0% of property price</small>
+                <small class="text-orange-600" id="property-price">Property Price: RM 0</small>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label text-orange-700 fw-medium d-flex justify-content-between">
+                <span>Interest/Profit Rate (%)</span>
+                <span class="badge bg-orange-600 interest-rate-badge">4.5%</span>
+              </label>
+              <div class="slider-container">
+                <%= f.range_field :interest_rate, class: "form-range interest-rate-slider", min: "1", max: "10", step: "0.1", value: "4.5", required: true %>
+                <div class="d-flex justify-content-between">
+                  <small class="text-muted">1%</small>
+                  <small class="text-muted">5%</small>
+                  <small class="text-muted">10%</small>
+                </div>
+              </div>
+              <div class="interest-rate-input-container d-none">
+                <%= f.number_field :interest_rate, class: "form-control", placeholder: "Interest Rate", step: "0.01", required: true, value: 4.5 %>
+              </div>
+              <div class="invalid-feedback">Please enter the interest rate.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label text-orange-700 fw-medium">Loan Term (years)</label>
+              <div class="btn-group loan-term-toggle w-100" role="group">
+                <% [10, 15, 20, 25, 30, 35].each do |term| %>
+                <input type="radio" class="btn-check" name="loan_term_toggle" id="loan_term_<%= term %>" value="<%= term %>" <%= term == 30 ? 'checked' : '' %>>
+                <label class="btn btn-outline-orange" for="loan_term_<%= term %>"><%= term %></label>
+                <% end %>
+              </div>
+              <div class="loan-term-input-container d-none">
+                <%= f.select :loan_term, options_for_select([10, 15, 20, 25, 30, 35], 30), {}, class: "form-select", required: true %>
+              </div>
+              <div class="invalid-feedback">Please enter the loan term.</div>
+            </div>
+
+            <div class="col-md-12">
+              <label class="form-label text-orange-700 fw-medium">Banking Type</label>
+              <div class="banking-type-toggle">
+                <div class="btn-group w-100" role="group">
+                  <input type="radio" class="btn-check" name="bank_type_toggle" id="bank_type_conventional" value="conventional" checked>
+                  <label class="btn btn-outline-orange" for="bank_type_conventional">
+                    <i class="fas fa-university me-1"></i> Conventional
+                  </label>
+
+                  <input type="radio" class="btn-check" name="bank_type_toggle" id="bank_type_islamic" value="islamic">
+                  <label class="btn btn-outline-orange" for="bank_type_islamic">
+                    <i class="fas fa-mosque me-1"></i> Islamic
+                  </label>
+                </div>
+                <div class="banking-type-input-container d-none">
+                  <%= f.select :bank_type, options_for_select([['Conventional', 'conventional'], ['Islamic', 'islamic']], 'conventional'), {}, { class: "form-select" } %>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Enhanced payment summary -->
+          <div class="mt-4">
+            <div class="row">
+              <div class="col-md-8">
+                <div class="p-3 bg-orange-100 rounded-3">
+                  <h5 class="text-orange-800 fw-semibold mb-3">Monthly Payment Details</h5>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="mb-0 fw-bold text-orange-600" id="monthly-payment">RM 0</h4>
+                    <span class="badge bg-success payment-affordability-badge">Affordable</span>
+                  </div>
+                  <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar bg-orange-500" role="progressbar" style="width: 60%;" id="payment-progress"></div>
+                  </div>
+                  <div class="row">
+                    <div class="col-6">
+                      <p class="small text-orange-700 mb-1">Total loan:</p>
+                      <p class="fw-medium" id="total-loan">RM 0</p>
+                    </div>
+                    <div class="col-6">
+                      <p class="small text-orange-700 mb-1">Total interest paid:</p>
+                      <p class="fw-medium" id="total-interest">RM 0</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="p-3 bg-light rounded-3 h-100 d-flex flex-column justify-content-center">
+                  <div class="text-center">
+                    <i class="fas fa-chart-pie text-orange-600 fs-2 mb-2"></i>
+                    <div class="progress custom-progress mx-auto mb-2" style="height: 8px; width: 80%;">
+                      <div class="progress-bar bg-orange-400" role="progressbar" style="width: 35%;" id="principal-ratio"></div>
+                      <div class="progress-bar bg-orange-600" role="progressbar" style="width: 65%;" id="interest-ratio"></div>
+                    </div>
+                    <p class="small mb-0">Principal vs Interest</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <button type="reset" class="btn btn-outline-secondary me-md-2 reset-btn">
+              <i class="fas fa-undo me-1"></i> Reset
+            </button>
+            <button type="submit" class="btn btn-orange-600 text-white">
+              <i class="fas fa-calculator me-1"></i> Calculate Full Amortization
+            </button>
+          </div>
+        </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOMContentLoaded event fired");
+
+    // Remove the Bootstrap tooltip initialization that's causing the error
+    // Instead, only initialize tooltips if Bootstrap is available
+    if (typeof bootstrap !== 'undefined') {
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+      });
+    }
+
+    // Form validation 
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+      form.addEventListener('submit', event => {
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    });
+
+    // Get input fields and set them as readonly (display-only)
+    const loanAmountInput = document.getElementById('mortgage_calculator_loan_amount');
+    const downPaymentInput = document.getElementById('mortgage_calculator_down_payment');
+
+    console.log("Input elements:", {
+      loanAmountInputId: 'mortgage_calculator_loan_amount',
+      loanAmountInputFound: !!loanAmountInput,
+      downPaymentInputId: 'mortgage_calculator_down_payment',
+      downPaymentInputFound: !!downPaymentInput
+    });
+
+    // Try alternative selectors if not found by ID
+    if (!loanAmountInput) {
+      const altLoanInput = document.querySelector('input[placeholder="Loan Amount"]');
+      console.log("Trying alternative selector for loan input:", !!altLoanInput);
+      if (altLoanInput) {
+        console.log("Found loan input with alternative selector");
+      }
+    }
+
+    if (loanAmountInput) {
+      loanAmountInput.readOnly = true; // Make readonly instead of removing
+      loanAmountInput.classList.add('cursor-not-allowed');
+    }
+
+    // Get slider elements
+    const loanAmountSlider = document.querySelector('.loan-amount-slider');
+    const downPaymentSlider = document.querySelector('.down-payment-slider');
+    const interestRateSlider = document.querySelector('.interest-rate-slider');
+
+    console.log("Slider elements:", {
+      loanAmountSliderClass: '.loan-amount-slider',
+      loanAmountSliderFound: !!loanAmountSlider,
+      downPaymentSliderClass: '.down-payment-slider',
+      downPaymentSliderFound: !!downPaymentSlider,
+      interestRateSliderClass: '.interest-rate-slider',
+      interestRateSliderFound: !!interestRateSlider
+    });
+
+    // Try alternative selectors if not found by class
+    if (!loanAmountSlider) {
+      const altSlider = document.querySelector('input[type="range"]');
+      console.log("Trying alternative selector for loan slider:", !!altSlider);
+      if (altSlider) {
+        console.log("Found slider with alternative selector:", altSlider);
+        // Use this slider instead
+        const loanAmountSlider = altSlider;
+      }
+    }
+
+    if (loanAmountSlider) {
+      console.log("Loan amount slider attributes:", {
+        min: loanAmountSlider.getAttribute('min'),
+        max: loanAmountSlider.getAttribute('max'),
+        step: loanAmountSlider.getAttribute('step'),
+        value: loanAmountSlider.value
+      });
+    }
+
+    // Currency toggle setup
+    initCurrencyToggle();
+
+    // Slider event listeners
+    if (loanAmountSlider && loanAmountInput) {
+      // Make sure the loan amount input is readonly
+      loanAmountInput.readOnly = true;
+      loanAmountInput.classList.add('cursor-not-allowed');
+
+      // Set initial value from slider to input
+      loanAmountInput.value = loanAmountSlider.value || '500000';
+      console.log("Initial slider setup - slider value:", loanAmountSlider.value);
+      console.log("Initial slider setup - input value:", loanAmountInput.value);
+
+      // When slider changes, update input
+      loanAmountSlider.addEventListener('input', function() {
+        console.log("===Slider changed to: ", this.value);
+        loanAmountInput.value = this.value;
+        console.log("===Updated input value: ", loanAmountInput.value);
+        updateMortgageCalculations();
+      });
+
+      console.log("Added event listener to loan amount slider:", loanAmountSlider);
+    } else {
+      console.log("Slider or input element not found:", {
+        slider: !!loanAmountSlider,
+        input: !!loanAmountInput
+      });
+    }
+
+    if (downPaymentSlider && downPaymentInput) {
+      // Make sure the down payment input is readonly
+      downPaymentInput.readOnly = true;
+      downPaymentInput.classList.add('cursor-not-allowed');
+
+      // When slider changes, update input and percentage badge
+      downPaymentSlider.addEventListener('input', function() {
+        const loanAmount = parseFloat(loanAmountInput?.value) || 500000;
+        const downPaymentPercentage = parseFloat(this.value);
+
+        // Calculate property price and down payment
+        const propertyPrice = loanAmount / (1 - (downPaymentPercentage / 100));
+        const downPaymentValue = propertyPrice * (downPaymentPercentage / 100);
+
+        // Update input with calculated down payment value
+        downPaymentInput.value = downPaymentValue.toFixed(0);
+
+        // Update percentage badge
+        const downPaymentPercentageBadge = document.getElementById('down-payment-percentage-badge');
+        if (downPaymentPercentageBadge) {
+          downPaymentPercentageBadge.textContent = downPaymentPercentage + '%';
+        }
+
+        // Update down payment badge
+        const currencyTypeElement = document.querySelector('input[name="currency_type"]:checked');
+        const currencyType = currencyTypeElement ? currencyTypeElement.value : 'MYR';
+        const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+        const downPaymentBadge = document.querySelector('.down-payment-badge');
+
+        if (downPaymentBadge) {
+          downPaymentBadge.textContent = currencySymbol + ' ' + downPaymentValue.toLocaleString(undefined, {
+            maximumFractionDigits: 0
+          });
+        }
+
+        // Update progress bar
+        updateDownPaymentProgressBar(downPaymentPercentage);
+
+        updateMortgageCalculations();
+      });
+    }
+
+    if (interestRateSlider) {
+      interestRateSlider.addEventListener('input', function() {
+        const interestRateInput = document.getElementById('calculator_interest_rate');
+        const interestRateBadge = document.querySelector('.interest-rate-badge');
+
+        if (interestRateInput) {
+          interestRateInput.value = this.value;
+        }
+
+        if (interestRateBadge) {
+          interestRateBadge.textContent = this.value + '%';
+        }
+
+        updateMortgageCalculations();
+      });
+    }
+
+    // Banking type toggle
+    initBankingTypeToggle();
+
+    // Loan term toggle
+    initLoanTermToggle();
+
+    // Function to initialize currency toggle
+    function initCurrencyToggle() {
+      const toggle = document.getElementById('currency_toggle');
+      const myrRadio = document.getElementById('currency_myr');
+      const usdRadio = document.getElementById('currency_usd');
+
+      if (toggle) {
+        toggle.addEventListener('change', function() {
+          if (this.checked) {
+            if (usdRadio) usdRadio.checked = true;
+          } else {
+            if (myrRadio) myrRadio.checked = true;
+          }
+
+          updateSymbols();
+          updateMortgageCalculations();
+        });
+      }
+    }
+
+    // Update currency symbols
+    function updateSymbols() {
+      const currencyTypeElement = document.querySelector('input[name="currency_type"]:checked');
+      const currencyType = currencyTypeElement ? currencyTypeElement.value : 'MYR';
+      const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+
+      document.querySelectorAll('.currency-symbol').forEach(el => {
+        el.textContent = currencySymbol;
+      });
+    }
+
+    // Banking type toggle
+    function initBankingTypeToggle() {
+      const bankingTypeToggleButtons = document.querySelectorAll('input[name="bank_type_toggle"]');
+      const bankTypeSelect = document.getElementById('mortgage_calculator_bank_type');
+
+      if (bankingTypeToggleButtons.length && bankTypeSelect) {
+        bankingTypeToggleButtons.forEach(button => {
+          button.addEventListener('change', function() {
+            if (this.checked) {
+              bankTypeSelect.value = this.value;
+              updateMortgageCalculations();
+            }
+          });
+        });
+      }
+    }
+
+    // Loan term toggle
+    function initLoanTermToggle() {
+      const loanTermButtons = document.querySelectorAll('input[name="loan_term_toggle"]');
+      const loanTermSelect = document.getElementById('mortgage_calculator_loan_term');
+
+      if (loanTermButtons.length && loanTermSelect) {
+        loanTermButtons.forEach(button => {
+          button.addEventListener('change', function() {
+            if (this.checked) {
+              loanTermSelect.value = this.value;
+              updateMortgageCalculations();
+            }
+          });
+        });
+      }
+    }
+
+    // Update down payment progress bar
+    function updateDownPaymentProgressBar(percentage) {
+      const downPaymentProgress = document.getElementById('down-payment-progress');
+      const loanAmountProgress = document.getElementById('loan-amount-progress');
+
+      if (downPaymentProgress && loanAmountProgress) {
+        downPaymentProgress.style.width = percentage + '%';
+        loanAmountProgress.style.width = (100 - percentage) + '%';
+      }
+    }
+
+    // Real-time calculations for mortgage
+    function updateMortgageCalculations() {
+      const loanAmountElement = document.getElementById('mortgage_calculator_loan_amount');
+      const downPaymentElement = document.getElementById('mortgage_calculator_down_payment');
+      const interestRateElement = document.getElementById('mortgage_calculator_interest_rate');
+      const loanTermElement = document.getElementById('mortgage_calculator_loan_term');
+
+      // Check if elements exist before accessing values
+      const loanAmount = loanAmountElement ? parseFloat(loanAmountElement.value) || 0 : 0;
+      const downPayment = downPaymentElement ? parseFloat(downPaymentElement.value) || 0 : 0;
+      const interestRate = interestRateElement ? parseFloat(interestRateElement.value) || 4.5 : 4.5;
+      const loanTerm = loanTermElement ? parseInt(loanTermElement.value) || 30 : 30;
+
+      // Currency selection
+      const currencyTypeElement = document.querySelector('input[name="currency_type"]:checked');
+      const currencyType = currencyTypeElement ? currencyTypeElement.value : 'MYR';
+      const currencySymbol = currencyType === 'MYR' ? 'RM' : '$';
+
+      // Calculate property price
+      const propertyPrice = loanAmount + downPayment;
+
+      // Update property price display
+      const propertyPriceEl = document.getElementById('property-price');
+      if (propertyPriceEl) {
+        propertyPriceEl.textContent = `Property Price: ${currencySymbol} ${propertyPrice.toLocaleString()}`;
+      }
+
+      // Update down payment percentage
+      const downPaymentPercentageEl = document.getElementById('down-payment-percentage');
+      if (downPaymentPercentageEl) {
+        const downPaymentPercentage = propertyPrice > 0 ? ((downPayment / propertyPrice) * 100).toFixed(1) : 0;
+        downPaymentPercentageEl.textContent = `${downPaymentPercentage}% of property price`;
+      }
+
+      // Calculate monthly payment
+      function calculateMortgagePayment(loan, rate, term) {
+        const monthlyRate = rate / 100 / 12;
+        const totalMonths = term * 12;
+        if (loan <= 0 || monthlyRate <= 0 || totalMonths <= 0) return 0;
+        const x = Math.pow(1 + monthlyRate, totalMonths);
+        return (loan * x * monthlyRate) / (x - 1);
+      }
+
+      const monthlyPayment = calculateMortgagePayment(loanAmount, interestRate, loanTerm);
+      const monthlyPaymentEl = document.getElementById('monthly-payment');
+      if (monthlyPaymentEl) {
+        monthlyPaymentEl.textContent = `${currencySymbol} ${monthlyPayment.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+      }
+
+      // Calculate total loan amount over the term
+      const totalLoan = monthlyPayment * loanTerm * 12;
+      const totalLoanEl = document.getElementById('total-loan');
+      if (totalLoanEl) {
+        totalLoanEl.textContent = `${currencySymbol} ${totalLoan.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+      }
+
+      // Calculate total interest paid
+      const totalInterest = totalLoan - loanAmount;
+      const totalInterestEl = document.getElementById('total-interest');
+      if (totalInterestEl) {
+        totalInterestEl.textContent = `${currencySymbol} ${totalInterest.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
+      }
+
+      // Update principal vs interest ratio
+      const principalRatio = (loanAmount / totalLoan) * 100;
+      const interestRatio = (totalInterest / totalLoan) * 100;
+
+      const principalRatioEl = document.getElementById('principal-ratio');
+      const interestRatioEl = document.getElementById('interest-ratio');
+
+      if (principalRatioEl && interestRatioEl) {
+        principalRatioEl.style.width = `${principalRatio}%`;
+        interestRatioEl.style.width = `${interestRatio}%`;
+      }
+
+      // Update payment affordability indicator
+      const paymentAffordabilityBadge = document.querySelector('.payment-affordability-badge');
+      if (paymentAffordabilityBadge) {
+        // Simple affordability check (typically 30% of income is affordable)
+        // This is a placeholder - in a real app you would calculate based on user's income
+        if (monthlyPayment > 5000) {
+          paymentAffordabilityBadge.className = 'badge bg-danger payment-affordability-badge';
+          paymentAffordabilityBadge.textContent = 'High Payment';
+        } else if (monthlyPayment > 3000) {
+          paymentAffordabilityBadge.className = 'badge bg-warning payment-affordability-badge';
+          paymentAffordabilityBadge.textContent = 'Moderate';
+        } else {
+          paymentAffordabilityBadge.className = 'badge bg-success payment-affordability-badge';
+          paymentAffordabilityBadge.textContent = 'Affordable';
+        }
+      }
+
+      // Update payment progress bar (relative to a default maximum of 8000)
+      const paymentProgress = document.getElementById('payment-progress');
+      if (paymentProgress) {
+        const progressPercentage = Math.min((monthlyPayment / 8000) * 100, 100);
+        paymentProgress.style.width = `${progressPercentage}%`;
+
+        // Change color based on amount
+        if (monthlyPayment > 5000) {
+          paymentProgress.className = 'progress-bar bg-danger';
+        } else if (monthlyPayment > 3000) {
+          paymentProgress.className = 'progress-bar bg-warning';
+        } else {
+          paymentProgress.className = 'progress-bar bg-success';
+        }
+      }
+    }
+
+    // Reset button functionality
+    const resetButton = document.querySelector('.reset-btn');
+    const calculatorForm = document.querySelector('form');
+
+    if (resetButton && calculatorForm) {
+      resetButton.addEventListener('click', function(event) {
+        // Prevent the default reset behavior temporarily
+        event.preventDefault();
+
+        // Reset the form
+        calculatorForm.reset();
+
+        // Remove validation classes
+        calculatorForm.classList.remove('was-validated');
+
+        // Set default values for currency
+        const currencyMyr = document.getElementById('currency_myr');
+        const currencyToggle = document.getElementById('currency_toggle');
+
+        if (currencyMyr) currencyMyr.checked = true;
+        if (currencyToggle) currencyToggle.checked = false;
+
+        // Reset toggle buttons
+        const bankTypeConventional = document.getElementById('bank_type_conventional');
+        const loanTerm30 = document.getElementById('loan_term_30');
+
+        if (bankTypeConventional) bankTypeConventional.checked = true;
+        if (loanTerm30) loanTerm30.checked = true;
+
+        // Force update calculations with default values
+        setTimeout(function() {
+          // Reset to default values for other fields
+          if (loanAmountInput) loanAmountInput.value = '500000';
+          if (loanAmountSlider) loanAmountSlider.value = 500000;
+
+          // Update down payment input field with the initial value
+          const initialDownPayment = 0;
+          if (downPaymentInput) downPaymentInput.value = '0';
+          if (downPaymentSlider) downPaymentSlider.value = initialDownPayment;
+
+          const interestRateInput = document.getElementById('calculator_interest_rate');
+          const interestRateBadge = document.querySelector('.interest-rate-badge');
+
+          if (interestRateInput) interestRateInput.value = '4.5';
+          if (interestRateSlider) interestRateSlider.value = 4.5;
+          if (interestRateBadge) interestRateBadge.textContent = '4.5%';
+
+          const loanTermSelect = document.getElementById('calculator_loan_term');
+          if (loanTermSelect) loanTermSelect.value = '30';
+
+          // Reset down payment progress bar
+          updateDownPaymentProgressBar(0);
+
+          // Update calculations with default values
+          updateMortgageCalculations();
+        }, 10);
+      });
+    }
+
+    // Set initial values for inputs and update calculations
+    if (loanAmountInput && loanAmountSlider) {
+      loanAmountInput.value = loanAmountSlider.value || '500000';
+    }
+
+    if (downPaymentInput && downPaymentSlider) {
+      const downPaymentPercentage = parseFloat(downPaymentSlider.value) || 0;
+      const loanAmount = parseFloat(loanAmountInput?.value) || 500000;
+      const propertyPrice = loanAmount / (1 - (downPaymentPercentage / 100));
+      const downPaymentValue = propertyPrice * (downPaymentPercentage / 100);
+      downPaymentInput.value = downPaymentValue.toFixed(0);
+    }
+
+    // Initial calculation
+    updateMortgageCalculations();
+  });
+</script>
+
+<style>
+  /* app/assets/stylesheets/calculator_components.css */
+
+  /* Common styles for calculator components */
+  .calculator-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* Input range slider styling with orange theme */
+  input[type="range"] {
+    -webkit-appearance: none;
+    height: 8px;
+    background: #FDBA74;
+    border-radius: 4px;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #F97316;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #F97316;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+
+  /* Custom number input styling */
+  input[type="number"] {
+    border: 1px solid #FDBA74;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+    width: 100%;
+  }
+
+  input[type="number"]:focus {
+    border-color: #F97316;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+  }
+
+  /* Button styles */
+  .calculator-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #F97316;
+    color: white;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .calculator-btn:hover {
+    background-color: #EA580C;
+  }
+
+  .calculator-btn-outline {
+    background-color: white;
+    color: #F97316;
+    border: 1px solid #FDBA74;
+  }
+
+  .calculator-btn-outline:hover {
+    background-color: #FFF7ED;
+  }
+
+  /* Modal styles */
+  .calculator-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+
+  .calculator-modal {
+    background-color: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .calculator-modal-header {
+    color: #F97316;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 16px;
+  }
+
+  /* Chart container styling */
+  .chart-container {
+    background-color: white;
+    border: 1px solid #FDBA74;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .chart-title {
+    color: #9A3412;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  /* Results card styling */
+  .result-card {
+    background-color: #FFF7ED;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .result-label {
+    color: #9A3412;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .result-value {
+    color: #F97316;
+    font-size: 24px;
+    font-weight: bold;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .calculator-container {
+      padding: 10px;
+    }
+
+    .chart-container {
+      padding: 12px;
+    }
+
+    .result-value {
+      font-size: 20px;
+    }
+  }
+
+  /* General PDF styles for the mortgage calculator */
+  .mortgage-calculation {
+    font-family: Arial, sans-serif;
+    color: #333;
+    max-width: 100%;
+  }
+
+  .mortgage-calculation h1 {
+    color: #F97316;
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .mortgage-calculation h2 {
+    color: #F97316;
+    font-size: 18px;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #FDBA74;
+    padding-bottom: 5px;
+  }
+
+  /* Contact info section */
+  .contact-info {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #FFF7ED;
+    border-radius: 5px;
+  }
+
+  /* Summary section styles */
+  .summary-section {
+    margin-bottom: 30px;
+  }
+
+  .summary-box {
+    background-color: #FFF7ED;
+    border: 1px solid #FDBA74;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  .summary-title {
+    font-weight: bold;
+    color: #9A3412;
+    margin-bottom: 8px;
+  }
+
+  .summary-value {
+    font-size: 22px;
+    font-weight: bold;
+    color: #F97316;
+  }
+
+  .summary-note {
+    font-size: 12px;
+    color: #9A3412;
+    margin-top: 5px;
+  }
+
+  /* Tables for amortization and other data */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+  }
+
+  th {
+    background-color: #FFF7ED;
+    color: #9A3412;
+    text-align: left;
+    padding: 8px;
+    border-bottom: 2px solid #FDBA74;
+  }
+
+  td {
+    padding: 8px;
+    border-bottom: 1px solid #FFD8A8;
+  }
+
+  /* Malaysia-specific section */
+  .malaysia-section {
+    background-color: #FFF7ED;
+    border: 1px solid #FDBA74;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 20px 0;
+  }
+
+  .malaysia-section h2 {
+    color: #9A3412;
+    border-bottom: none;
+    margin-top: 0;
+  }
+
+  /* Page break for multi-page PDFs */
+  .page-break {
+    page-break-after: always;
+  }
+
+  /* Footer and disclaimer */
+  .footer {
+    margin-top: 40px;
+    font-size: 10px;
+    color: #9A3412;
+    text-align: center;
+  }
+
+  /* Print specific styles */
+  @media print {
+    body {
+      font-size: 12pt;
+    }
+
+    .summary-box {
+      break-inside: avoid;
+    }
+
+    .no-break {
+      break-inside: avoid;
+    }
+  }
+</style>

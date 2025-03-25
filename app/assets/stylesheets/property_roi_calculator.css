@@ -1,0 +1,140 @@
+/* app/assets/stylesheets/property_roi_calculator.css */
+
+/* Orange Design System Custom Classes */
+.bg-orange-50 {
+  background-color: #FFF7ED !important;
+}
+
+.bg-orange-100 {
+  background-color: #FFEDD5 !important;
+}
+
+.bg-orange-200 {
+  background-color: #FED7AA !important;
+}
+
+.bg-orange-300 {
+  background-color: #FDBA74 !important;
+}
+
+.bg-orange-500 {
+  background-color: #F97316 !important;
+}
+
+.bg-orange-600 {
+  background-color: #EA580C !important;
+}
+
+.text-orange-600 {
+  color: #EA580C !important;
+}
+
+.text-orange-700 {
+  color: #C2410C !important;
+}
+
+.text-orange-800 {
+  color: #9A3412 !important;
+}
+
+.border-orange-100 {
+  border-color: #FFEDD5 !important;
+}
+
+.border-orange-200 {
+  border-color: #FED7AA !important;
+}
+
+.border-orange-300 {
+  border-color: #FDBA74 !important;
+}
+
+.border-orange-500 {
+  border-color: #F97316 !important;
+}
+
+.btn-orange-600 {
+  background-color: #EA580C !important;
+  border-color: #EA580C !important;
+}
+
+.btn-orange-600:hover {
+  background-color: #C2410C !important;
+  border-color: #C2410C !important;
+}
+
+.btn-outline-orange {
+  color: #EA580C !important;
+  border-color: #EA580C !important;
+}
+
+.btn-outline-orange:hover {
+  background-color: #EA580C !important;
+  color: white !important;
+}
+
+/* Custom Tab Styles */
+.nav-tabs .nav-link {
+  color: #6B7280;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.75rem 1rem;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #EA580C;
+  border-color: transparent;
+}
+
+.nav-tabs .nav-link.active {
+  color: #EA580C;
+  border-color: transparent;
+  border-bottom: 2px solid #EA580C;
+  background-color: transparent;
+}
+
+/* Custom Form Controls */
+.form-control:focus,
+.form-select:focus {
+  border-color: #F97316;
+  box-shadow: 0 0 0 0.25rem rgba(249, 115, 22, 0.25);
+}
+
+/* Card styles */
+.card {
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0 0 0 / 6%);
+  overflow: hidden;
+}
+
+.card-header {
+  background-color: #fff;
+  border-bottom: 1px solid #FED7AA;
+  padding: 1rem 1.25rem;
+}
+
+/* Table styles */
+.table {
+  font-size: 0.875rem;
+}
+
+.table thead {
+  background-color: #FFF7ED;
+}
+
+.table thead th {
+  border-bottom: 1px solid #FDBA74;
+  color: #9A3412;
+  font-weight: 600;
+}
+
+/* Media queries for responsive layout */
+@media (max-width: 768px) {
+  .key-metrics-card {
+    overflow-x: auto;
+  }
+  
+  .key-metrics-table {
+    min-width: 500px;
+  }
+}

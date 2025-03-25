@@ -1,0 +1,413 @@
+<!-- app/views/property_roi_calculations/results.html.erb -->
+
+<div class="container-fluid p-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-orange-800"><i class="fas fa-chart-line me-2"></i>Property ROI Analysis</h2>
+        <div class="btn-group">
+          <%= link_to property_roi_path, class: "btn btn-outline-secondary" do %>
+            <i class="fas fa-arrow-left me-1"></i> New Calculation
+          <% end %>
+          <% 
+            # Safely prepare calculator params for passing to export links
+            calculator_params = {}
+            if params[:calculator].present? && params[:calculator].respond_to?(:to_unsafe_h)
+              calculator_params = params[:calculator].to_unsafe_h
+            elsif params[:property_roi_calculator].present? && params[:property_roi_calculator].respond_to?(:to_unsafe_h)
+              calculator_params = params[:property_roi_calculator].to_unsafe_h
+            end
+          %>
+          <%= link_to property_roi_export_pdf_path(property_roi_calculator: calculator_params), 
+              class: "btn btn-outline-orange" do %>
+            <i class="far fa-file-pdf me-1"></i> Export PDF
+          <% end %>
+          <%= link_to property_roi_export_excel_path(property_roi_calculator: calculator_params), 
+              class: "btn btn-outline-orange" do %>
+            <i class="far fa-file-excel me-1"></i> Export Excel
+          <% end %>
+        </div>
+      </div>
+      <!-- Key Metrics Grid -->
+      <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+          <div class="bg-orange-50 p-4 rounded-3 text-center h-100">
+            <h5 class="text-orange-800">Cash-on-Cash Return</h5>
+            <p class="display-6 fw-bold text-orange-600"><%= number_to_percentage(@results[:cash_on_cash_return], precision: 2) %></p>
+            <p class="small text-orange-600">Annual cash flow / Initial investment</p>
+          </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-3">
+          <div class="bg-orange-50 p-4 rounded-3 text-center h-100">
+            <h5 class="text-orange-800">Cap Rate</h5>
+            <p class="display-6 fw-bold text-orange-600"><%= number_to_percentage(@results[:cap_rate], precision: 2) %></p>
+            <p class="small text-orange-600">NOI / Property value</p>
+          </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-3">
+          <div class="bg-orange-50 p-4 rounded-3 text-center h-100">
+            <h5 class="text-orange-800">Total ROI</h5>
+            <p class="display-6 fw-bold text-orange-600"><%= number_to_percentage(@results[:total_roi], precision: 2) %></p>
+            <p class="small text-orange-600">Over <%= @calculator.holding_period %> years</p>
+          </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-3">
+          <div class="bg-orange-50 p-4 rounded-3 text-center h-100">
+            <h5 class="text-orange-800">Payback Period</h5>
+            <p class="display-6 fw-bold text-orange-600"><%= number_with_precision(@results[:payback_period], precision: 1) %></p>
+            <p class="small text-orange-600">Years to recover investment</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cash Flow and Financial Analysis -->
+      <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom border-orange-100">
+              <h5 class="text-orange-900 mb-0">Cash Flow Analysis</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between border-bottom border-orange-100 py-2">
+                <span class="text-orange-700">Monthly Cash Flow:</span>
+                <span class="fw-medium <%= @results[:monthly_cash_flow] >= 0 ? 'text-success' : 'text-danger' %>">
+                  RM <%= number_with_precision(@results[:monthly_cash_flow], precision: 2, delimiter: ',') %>
+                </span>
+              </div>
+              <div class="d-flex justify-content-between border-bottom border-orange-100 py-2">
+                <span class="text-orange-700">Annual Cash Flow:</span>
+                <span class="fw-medium <%= @results[:annual_cash_flow] >= 0 ? 'text-success' : 'text-danger' %>">
+                  RM <%= number_with_precision(@results[:annual_cash_flow], precision: 2, delimiter: ',') %>
+                </span>
+              </div>
+              <div class="d-flex justify-content-between border-bottom border-orange-100 py-2">
+                <span class="text-orange-700">Net Operating Income:</span>
+                <span class="fw-medium">
+                  RM <%= number_with_precision(@results[:net_operating_income], precision: 2, delimiter: ',') %>
+                </span>
+              </div>
+              <div class="d-flex justify-content-between border-bottom border-orange-100 py-2">
+                <span class="text-orange-700">Break-Even Ratio:</span>
+                <span class="fw-medium">
+                  <%= number_to_percentage(@results[:break_even_ratio], precision: 2) %>
+                </span>
+              </div>
+              <div class="d-flex justify-content-between py-2">
+                <span class="text-orange-700">Debt Coverage Ratio:</span>
+                <span class="fw-medium">
+                  <%= number_with_precision(@results[:debt_coverage_ratio], precision: 2) %>
+                </span>
+              </div>
+              <div class="mt-4 bg-orange-50 p-3 rounded-3">
+                <h6 class="text-orange-800 fw-semibold mb-1">Total Profit (over <%= @calculator.holding_period %> years)</h6>
+                <p class="fs-4 fw-bold text-orange-600">
+                  RM <%= number_with_precision(@results[:total_profit], precision: 2, delimiter: ',') %>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6 mb-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom border-orange-100">
+              <h5 class="text-orange-900 mb-0">Investment Analysis</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between border-bottom border-orange-100 py-2">
+                <span class="text-orange-700">Property Price:</span>
+                <span class="fw-medium">
+                  RM <%= number_with_precision(@calculator.property_price, precision: 2, delimiter: ',') %>
+                </span>
+              </div>
+              <div class="d-flex justify-content-between border-bottom border-orange-100 py-2">
+                <span class="text-orange-700">Initial Investment:</span>
+                <span class="fw-medium">
+                  RM <%= number_with_precision(@results[:initial_investment], precision: 2, delimiter: ',') %>
+                </span>
+              </div>
+              <div class="d-flex justify-content-between border-bottom border-orange-100 py-2">
+                <span class="text-orange-700">Monthly Mortgage:</span>
+                <span class="fw-medium">
+                  RM <%= number_with_precision(@results[:monthly_payment], precision: 2, delimiter: ',') %>
+                </span>
+              </div>
+              <div class="d-flex justify-content-between border-bottom border-orange-100 py-2">
+                <span class="text-orange-700">Gross Rental Yield:</span>
+                <span class="fw-medium">
+                  <%= number_to_percentage(@results[:gross_rental_yield], precision: 2) %>
+                </span>
+              </div>
+              <div class="d-flex justify-content-between py-2">
+                <span class="text-orange-700">Total Return on Investment:</span>
+                <span class="fw-medium">
+                  <%= number_to_percentage(@results[:total_roi], precision: 2) %>
+                </span>
+              </div>
+              <div class="mt-4 bg-orange-50 p-3 rounded-3">
+                <h6 class="text-orange-800 fw-semibold mb-1">Final Property Value</h6>
+                <p class="fs-4 fw-bold text-orange-600">
+                  RM <%= number_with_precision(@results[:final_property_value], precision: 2, delimiter: ',') %>
+                </p>
+                <p class="small text-orange-600">After <%= @calculator.holding_period %> years</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Property Value & Equity Chart -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom border-orange-100">
+          <h5 class="text-orange-900 mb-0">Property Value & Equity Growth</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="propertyValueChart" height="250"></canvas>
+        </div>
+      </div>
+      
+      <!-- Cash Flow Chart -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom border-orange-100">
+          <h5 class="text-orange-900 mb-0">Cash Flow Projection</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="cashFlowChart" height="250"></canvas>
+        </div>
+      </div>
+
+      <% if @calculator.currency_type == 'MYR' || @calculator.currency_type.blank? %>
+        <!-- Malaysia-specific information -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white border-bottom border-orange-100">
+            <div class="d-flex align-items-center">
+              <h5 class="text-orange-900 mb-0 me-2">Malaysian Investment Considerations</h5>
+              <span class="badge bg-orange-100 text-orange-800 rounded-pill">Malaysia Specific</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6 col-lg-3">
+                <div class="bg-orange-50 p-3 rounded-3 h-100">
+                  <h6 class="text-orange-700 fw-medium">RPGT (Real Property Gains Tax)</h6>
+                  <div class="mt-2">
+                    <div class="d-flex justify-content-between">
+                      <small class="text-orange-700">Years 1-3:</small>
+                      <small class="fw-medium">30%</small>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <small class="text-orange-700">Years 4-5:</small>
+                      <small class="fw-medium">20%</small>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <small class="text-orange-700">Year 6+:</small>
+                      <small class="fw-medium">0% (Malaysian) / 10% (Foreign)</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-md-6 col-lg-3">
+                <div class="bg-orange-50 p-3 rounded-3 h-100">
+                  <h6 class="text-orange-700 fw-medium">Tax Deductions</h6>
+                  <p class="small text-orange-600 mt-2">
+                    Eligible deductions: Loan interest, repairs, assessment tax, insurance, agent fees
+                  </p>
+                </div>
+              </div>
+              
+              <div class="col-md-6 col-lg-3">
+                <div class="bg-orange-50 p-3 rounded-3 h-100">
+                  <h6 class="text-orange-700 fw-medium">Foreign Ownership</h6>
+                  <p class="small text-orange-600 mt-2">
+                    Minimum purchase price for foreigners: RM1,000,000 (varies by state)
+                  </p>
+                </div>
+              </div>
+              
+              <div class="col-md-6 col-lg-3">
+                <div class="bg-orange-50 p-3 rounded-3 h-100">
+                  <h6 class="text-orange-700 fw-medium">Annual Property Tax</h6>
+                  <p class="small text-orange-600 mt-2">
+                    Assessment tax: ~0.1-0.35% of property value
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Yearly Projections Table -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom border-orange-100">
+          <h5 class="text-orange-900 mb-0">Yearly Projections</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped mb-0">
+              <thead class="bg-light">
+                <tr>
+                  <th>Year</th>
+                  <th>Property Value</th>
+                  <th>Loan Balance</th>
+                  <th>Equity</th>
+                  <th>Rental Income</th>
+                  <th>Expenses</th>
+                  <th>Cash Flow</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @results[:yearly_projections].each do |projection| %>
+                <tr>
+                  <td><%= projection[:year] %></td>
+                  <td>RM <%= number_with_precision(projection[:property_value], precision: 0, delimiter: ',') %></td>
+                  <td>RM <%= number_with_precision(projection[:loan_balance], precision: 0, delimiter: ',') %></td>
+                  <td>RM <%= number_with_precision(projection[:equity], precision: 0, delimiter: ',') %></td>
+                  <td>RM <%= number_with_precision(projection[:rental_income], precision: 0, delimiter: ',') %></td>
+                  <td>RM <%= number_with_precision(projection[:expenses], precision: 0, delimiter: ',') %></td>
+                  <td class="<%= projection[:cash_flow] >= 0 ? 'text-success' : 'text-danger' %>">
+                    RM <%= number_with_precision(projection[:cash_flow], precision: 0, delimiter: ',') %>
+                  </td>
+                </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Prepare data for charts
+    const yearlyData = <%= raw @results[:yearly_projections].to_json %>;
+    const years = yearlyData.map(data => data.year);
+    
+    // Property Value and Equity Chart
+    const propertyValueCtx = document.getElementById('propertyValueChart').getContext('2d');
+    const propertyValueChart = new Chart(propertyValueCtx, {
+      type: 'line',
+      data: {
+        labels: years,
+        datasets: [
+          {
+            label: 'Property Value',
+            data: yearlyData.map(data => data.property_value),
+            borderColor: '#F97316',
+            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+            borderWidth: 2,
+            tension: 0.1,
+            fill: false
+          },
+          {
+            label: 'Equity',
+            data: yearlyData.map(data => data.equity),
+            borderColor: '#FB923C',
+            backgroundColor: 'rgba(251, 146, 60, 0.1)',
+            borderWidth: 2,
+            tension: 0.1,
+            fill: false
+          },
+          {
+            label: 'Loan Balance',
+            data: yearlyData.map(data => data.loan_balance),
+            borderColor: '#FDBA74',
+            backgroundColor: 'rgba(253, 186, 116, 0.1)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            tension: 0.1,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': RM ' + context.raw.toLocaleString();
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return 'RM ' + value.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // Cash Flow Chart
+    const cashFlowCtx = document.getElementById('cashFlowChart').getContext('2d');
+    const cashFlowChart = new Chart(cashFlowCtx, {
+      type: 'bar',
+      data: {
+        labels: years,
+        datasets: [
+          {
+            label: 'Annual Cash Flow',
+            data: yearlyData.map(data => data.cash_flow),
+            backgroundColor: function(context) {
+              const value = context.dataset.data[context.dataIndex];
+              return value >= 0 ? 'rgba(249, 115, 22, 0.7)' : 'rgba(220, 38, 38, 0.7)';
+            },
+            borderColor: function(context) {
+              const value = context.dataset.data[context.dataIndex];
+              return value >= 0 ? 'rgba(249, 115, 22, 1)' : 'rgba(220, 38, 38, 1)';
+            },
+            borderWidth: 1
+          },
+          {
+            label: 'Cumulative Cash Flow',
+            data: yearlyData.map((data, index) => {
+              return yearlyData
+                .slice(0, index + 1)
+                .reduce((acc, item) => acc + item.cash_flow, 0);
+            }),
+            type: 'line',
+            borderColor: 'rgba(124, 45, 18, 1)',
+            backgroundColor: 'rgba(124, 45, 18, 0.1)',
+            borderWidth: 2,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': RM ' + context.raw.toLocaleString();
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            ticks: {
+              callback: function(value) {
+                return 'RM ' + value.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+  });
+</script>

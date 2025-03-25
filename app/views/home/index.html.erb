@@ -1,0 +1,734 @@
+<%# app/views/home/index.html.erb %>
+<div class="container">
+  <%# Page Header %>
+  <div class="page-header">
+    <h1 class="page-title">Property Calculators</h1>
+    <p class="page-description">Tools to help you and your clients make informed property decisions</p>
+  </div>
+
+  <%# Search and Filter %>
+  <div class="search-filter-container">
+    <div class="search-container">
+      <div class="search-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      <input type="text" class="search-input" placeholder="Search calculators..." id="calculator-search" />
+    </div>
+
+    <div class="filter-buttons">
+      <button class="filter-button filter-button-active" id="category-all">All</button>
+      <button class="filter-button filter-button-default" id="category-financing">Financing</button>
+      <button class="filter-button filter-button-default" id="category-investment">Investment</button>
+      <button class="filter-button filter-button-default" id="category-transaction">Transaction</button>
+    </div>
+  </div>
+
+  <%# Popular Calculators Section %>
+  <div class="popular-section" id="popular-calculators">
+    <h2 class="section-title">Frequently Used Calculators</h2>
+    <div class="popular-grid">
+      <%= link_to mortgage_path, class: "popular-calculator-card" do %>
+      <div class="calculator-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div class="calculator-info">
+        <h3 class="calculator-name">Mortgage Calculator</h3>
+        <p class="calculator-description">Calculate monthly payments, amortization schedules, and total interest costs.</p>
+      </div>
+      <% end %>
+
+      <%= link_to affordability_path, class: "popular-calculator-card" do %>
+      <div class="calculator-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      </div>
+      <div class="calculator-info">
+        <h3 class="calculator-name">Affordability Calculator</h3>
+        <p class="calculator-description">Determine maximum affordable property price based on income and expenses.</p>
+      </div>
+      <% end %>
+
+      <%= link_to property_roi_path, class: "popular-calculator-card" do %>
+      <div class="calculator-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+      </div>
+      <div class="calculator-info">
+        <h3 class="calculator-name">Investment ROI Calculator</h3>
+        <p class="calculator-description">Analyze property investments with cash flow projections and ROI metrics.</p>
+      </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# All Calculators Grid %>
+  <div>
+    <h2 class="section-title" id="calculators-heading">All Calculators</h2>
+
+    <div class="calculators-grid" id="calculators-grid">
+      <%# Mortgage Calculator Card %>
+      <div class="calculator-card" data-category="financing" data-tags="monthly payments,loan,interest,amortization">
+        <div class="card-content">
+          <div class="card-header">
+            <div class="calculator-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 class="card-title">Mortgage Calculator</h3>
+          </div>
+          <p class="card-description">Calculate monthly payments, amortization schedules, and total interest costs.</p>
+          <div class="tag-container">
+            <span class="tag">monthly payments</span>
+            <span class="tag">loan</span>
+            <span class="tag">interest</span>
+            <span class="tag">amortization</span>
+          </div>
+          <div class="card-actions">
+            <%= link_to "Open Calculator", mortgage_path, class: "calculator-button" %>
+          </div>
+        </div>
+      </div>
+
+      <%# Affordability Calculator Card %>
+      <div class="calculator-card" data-category="financing" data-tags="budget,loan eligibility,debt service ratio">
+        <div class="card-content">
+          <div class="card-header">
+            <div class="calculator-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </div>
+            <h3 class="card-title">Affordability Calculator</h3>
+          </div>
+          <p class="card-description">Determine maximum affordable property price based on income and expenses.</p>
+          <div class="tag-container">
+            <span class="tag">budget</span>
+            <span class="tag">loan eligibility</span>
+            <span class="tag">debt service ratio</span>
+          </div>
+          <div class="card-actions">
+            <%= link_to "Open Calculator", affordability_path, class: "calculator-button" %>
+          </div>
+        </div>
+      </div>
+
+      <%# Investment ROI Calculator Card %>
+      <div class="calculator-card" data-category="investment" data-tags="return on investment,cash flow,cap rate,investment">
+        <div class="card-content">
+          <div class="card-header">
+            <div class="calculator-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+            <h3 class="card-title">Investment ROI Calculator</h3>
+          </div>
+          <p class="card-description">Analyze property investments with cash flow projections and ROI metrics.</p>
+          <div class="tag-container">
+            <span class="tag">return on investment</span>
+            <span class="tag">cash flow</span>
+            <span class="tag">cap rate</span>
+            <span class="tag">investment</span>
+          </div>
+          <div class="card-actions">
+            <%= link_to "Open Calculator", property_roi_path, class: "calculator-button" %>
+          </div>
+        </div>
+      </div>
+
+      <%# Rental Yield Calculator Card %>
+      <div class="calculator-card" data-category="investment" data-tags="rental,yield,investment">
+        <div class="card-content">
+          <div class="card-header">
+            <div class="calculator-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+            </div>
+            <h3 class="card-title">Rental Yield Calculator</h3>
+          </div>
+          <p class="card-description">Calculate gross and net rental yields for investment properties.</p>
+          <div class="tag-container">
+            <span class="tag">rental</span>
+            <span class="tag">yield</span>
+            <span class="tag">investment</span>
+          </div>
+          <div class="card-actions">
+            <div class="coming-soon-badge">Coming Soon</div>
+          </div>
+        </div>
+      </div>
+
+      <%# Stamp Duty Calculator Card %>
+      <div class="calculator-card" data-category="transaction" data-tags="fees,taxes,closing costs">
+        <div class="card-content">
+          <div class="card-header">
+            <div class="calculator-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="card-title">Stamp Duty Calculator</h3>
+          </div>
+          <p class="card-description">Calculate stamp duties, legal fees, and other transaction costs.</p>
+          <div class="tag-container">
+            <span class="tag">fees</span>
+            <span class="tag">taxes</span>
+            <span class="tag">closing costs</span>
+          </div>
+          <div class="card-actions">
+            <div class="coming-soon-badge">Coming Soon</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%# Usage Tips %>
+  <div class="tips-container">
+    <h2 class="tips-title">Calculator Usage Tips</h2>
+    <div class="tips-content">
+      <p class="tip-paragraph">
+        <span class="tip-bold">For Client Meetings:</span> Our calculators can be used during client consultations to provide immediate insights and visual aids.
+      </p>
+      <p class="tip-paragraph">
+        <span class="tip-bold">Sharing Results:</span> Most calculators allow you to export results as PDFs or Excel files that can be shared with clients.
+      </p>
+      <p class="tip-paragraph">
+        <span class="tip-bold">Malaysian Calculations:</span> All calculators have Malaysia-specific options for accurate local calculations.
+      </p>
+    </div>
+  </div>
+</div>
+
+<%# JavaScript for filtering functionality %>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('calculator-search');
+    const allButton = document.getElementById('category-all');
+    const financingButton = document.getElementById('category-financing');
+    const investmentButton = document.getElementById('category-investment');
+    const transactionButton = document.getElementById('category-transaction');
+    const calculatorsHeading = document.getElementById('calculators-heading');
+    const calculatorCards = document.querySelectorAll('#calculators-grid > div');
+    const popularCalculators = document.getElementById('popular-calculators');
+
+    let activeCategory = 'all';
+    let searchTerm = '';
+
+    // Filter function
+    function filterCalculators() {
+      let resultsCount = 0;
+
+      calculatorCards.forEach(card => {
+        const category = card.getAttribute('data-category');
+        const tags = card.getAttribute('data-tags').split(',');
+        const cardText = card.textContent.toLowerCase();
+
+        const matchesCategory = activeCategory === 'all' || category === activeCategory;
+        const matchesSearch = searchTerm === '' ||
+          cardText.includes(searchTerm) ||
+          tags.some(tag => tag.includes(searchTerm));
+
+        if (matchesCategory && matchesSearch) {
+          card.style.display = '';
+          resultsCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // Update heading based on search
+      if (searchTerm) {
+        calculatorsHeading.textContent = 'Search Results';
+        popularCalculators.style.display = 'none';
+      } else {
+        calculatorsHeading.textContent = 'All Calculators';
+        if (activeCategory === 'all') {
+          popularCalculators.style.display = '';
+        } else {
+          popularCalculators.style.display = 'none';
+        }
+      }
+
+      // If no results found
+      if (resultsCount === 0) {
+        const existingNoResults = document.getElementById('no-results-container');
+        if (!existingNoResults) {
+          const noResultsDiv = document.createElement('div');
+          noResultsDiv.className = 'empty-state';
+          noResultsDiv.id = 'no-results-container';
+          noResultsDiv.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="empty-title">No calculators found</h3>
+            <p class="empty-message">Try adjusting your search or filters.</p>
+          `;
+
+          document.getElementById('calculators-grid').appendChild(noResultsDiv);
+        }
+      } else {
+        const existingNoResults = document.getElementById('no-results-container');
+        if (existingNoResults) {
+          existingNoResults.remove();
+        }
+      }
+    }
+
+    // Search input event
+    searchInput.addEventListener('input', function() {
+      searchTerm = this.value.toLowerCase();
+      filterCalculators();
+    });
+
+    // Category button events
+    allButton.addEventListener('click', function() {
+      setActiveCategory('all');
+      activeCategory = 'all';
+      filterCalculators();
+    });
+
+    financingButton.addEventListener('click', function() {
+      setActiveCategory('financing');
+      activeCategory = 'financing';
+      filterCalculators();
+    });
+
+    investmentButton.addEventListener('click', function() {
+      setActiveCategory('investment');
+      activeCategory = 'investment';
+      filterCalculators();
+    });
+
+    transactionButton.addEventListener('click', function() {
+      setActiveCategory('transaction');
+      activeCategory = 'transaction';
+      filterCalculators();
+    });
+
+    // Helper to set active category button styles
+    function setActiveCategory(category) {
+      // Reset all buttons
+      [allButton, financingButton, investmentButton, transactionButton].forEach(btn => {
+        btn.className = 'filter-button filter-button-default';
+      });
+
+      // Set active button
+      let activeButton;
+      switch (category) {
+        case 'all':
+          activeButton = allButton;
+          break;
+        case 'financing':
+          activeButton = financingButton;
+          break;
+        case 'investment':
+          activeButton = investmentButton;
+          break;
+        case 'transaction':
+          activeButton = transactionButton;
+          break;
+      }
+
+      activeButton.className = 'filter-button filter-button-active';
+    }
+  });
+</script>
+<style>
+  /* atlas-calculators.css */
+
+  /* General Layout */
+  .container {
+    padding: 1.5rem;
+    max-width: 80rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Page Header */
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    /* text-gray-900 */
+  }
+
+  .page-description {
+    margin-top: 0.5rem;
+    color: #4B5563;
+    /* text-gray-600 */
+  }
+
+  /* Search and Filter Section */
+  .search-filter-container {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .search-filter-container {
+      flex-direction: row;
+      justify-content: space-between;
+    }
+  }
+
+  .search-container {
+    position: relative;
+    max-width: 28rem;
+    width: 100%;
+  }
+
+  .search-icon {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    padding-left: 0.75rem;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .search-icon svg {
+    height: 1.25rem;
+    width: 1.25rem;
+    color: #9CA3AF;
+    /* text-gray-400 */
+  }
+
+  .search-input {
+    display: block;
+    width: 100%;
+    padding-left: 2.5rem;
+    padding-right: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border: 1px solid #D1D5DB;
+    /* border-gray-300 */
+    border-radius: 0.375rem;
+    line-height: 1.25;
+    background-color: white;
+    color: #111827;
+    font-size: 0.875rem;
+  }
+
+  .search-input::placeholder {
+    color: #6B7280;
+    /* placeholder-gray-500 */
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #F97316;
+    /* focus:border-orange-500 */
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+    /* focus:ring-orange-500 */
+  }
+
+  .filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .filter-button {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+  }
+
+  .filter-button-default {
+    background-color: white;
+    color: #374151;
+    /* text-gray-700 */
+  }
+
+  .filter-button-default:hover {
+    background-color: #F9FAFB;
+    /* hover:bg-gray-50 */
+  }
+
+  .filter-button-active {
+    background-color: #FFEDD5;
+    /* bg-orange-100 */
+    color: #C2410C;
+    /* text-orange-700 */
+  }
+
+  /* Popular calculators section */
+  .popular-section {
+    margin-bottom: 2.5rem;
+  }
+
+  .section-title {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: #111827;
+    /* text-gray-900 */
+    margin-bottom: 1rem;
+  }
+
+  .popular-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .popular-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .popular-calculator-card {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background-color: white;
+    border: 1px solid #E5E7EB;
+    /* border-gray-200 */
+    border-radius: 0.5rem;
+    transition: background-color 150ms;
+    text-decoration: none;
+  }
+
+  .popular-calculator-card:hover {
+    background-color: #FFEDD5;
+    /* hover:bg-orange-50 */
+  }
+
+  .calculator-icon {
+    flex-shrink: 0;
+  }
+
+  .calculator-icon svg {
+    height: 2.5rem;
+    width: 2.5rem;
+    color: #F97316;
+    /* text-orange-600 */
+  }
+
+  .calculator-info {
+    margin-left: 1rem;
+  }
+
+  .calculator-name {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: #111827;
+    /* text-gray-900 */
+  }
+
+  .calculator-description {
+    font-size: 0.875rem;
+    color: #6B7280;
+    /* text-gray-500 */
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* All calculators grid */
+  .calculators-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .calculators-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .calculators-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .calculator-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    border: 1px solid #E5E7EB;
+    /* border-gray-200 */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    /* shadow-sm */
+    overflow: hidden;
+    transition: box-shadow 150ms;
+  }
+
+  .calculator-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    /* hover:shadow-md */
+  }
+
+  .card-content {
+    padding: 1.5rem;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+  }
+
+  .card-title {
+    margin-left: 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+    /* text-gray-900 */
+  }
+
+  .card-description {
+    margin-top: 0.75rem;
+    color: #4B5563;
+    /* text-gray-600 */
+  }
+
+  .tag-container {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: #FFEDD5;
+    /* bg-orange-100 */
+    color: #9A3412;
+    /* text-orange-800 */
+  }
+
+  .card-actions {
+    margin-top: 1.5rem;
+  }
+
+  .coming-soon-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid transparent;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    background-color: #F3F4F6;
+    /* bg-gray-100 */
+    color: #1F2937;
+    /* text-gray-800 */
+  }
+
+  .calculator-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border: 1px solid transparent;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    color: white;
+    background-color: #F97316;
+    /* bg-orange-600 */
+  }
+
+  .calculator-button:hover {
+    background-color: #EA580C;
+    /* hover:bg-orange-700 */
+  }
+
+  .calculator-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px #F97316;
+    /* focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 */
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  .empty-icon {
+    height: 3rem;
+    width: 3rem;
+    color: #9CA3AF;
+    /* text-gray-400 */
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1rem;
+  }
+
+  .empty-title {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: #111827;
+    /* text-gray-900 */
+  }
+
+  .empty-message {
+    margin-top: 0.5rem;
+    color: #6B7280;
+    /* text-gray-500 */
+  }
+
+  /* Usage tips section */
+  .tips-container {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background-color: #FFEDD5;
+    /* bg-orange-50 */
+    border-radius: 0.5rem;
+  }
+
+  .tips-title {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: #111827;
+    /* text-gray-900 */
+    margin-bottom: 0.5rem;
+  }
+
+  .tips-content {
+    font-size: 0.875rem;
+    color: #4B5563;
+    /* text-gray-600 */
+  }
+
+  .tip-paragraph {
+    margin-bottom: 0.5rem;
+  }
+
+  .tip-paragraph:last-child {
+    margin-bottom: 0;
+  }
+
+  .tip-bold {
+    font-weight: 700;
+  }
+</style>

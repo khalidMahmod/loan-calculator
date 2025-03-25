@@ -1,0 +1,283 @@
+<!-- app/views/property_roi_calculations/pdf_report.html.erb -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Property ROI Analysis Report</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+    }
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 5px;
+    }
+    .date {
+      color: #7f8c8d;
+      font-size: 14px;
+    }
+    .section {
+      margin-bottom: 30px;
+    }
+    h2 {
+      color: #3498db;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #f8f9fa;
+    }
+    .summary {
+      background-color: #f9f9f9;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #16a085;
+    }
+    .negative {
+      color: #e74c3c;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 12px;
+      color: #95a5a6;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Property ROI Analysis Report</h1>
+    <div class="date">Generated on <%= Time.now.strftime("%B %d, %Y") %></div>
+  </div>
+
+  <div class="section">
+    <h2>Property & Financing Details</h2>
+    <table>
+      <tr>
+        <th>Property Price</th>
+        <td><%= number_to_currency(@calculator.property_price, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Down Payment</th>
+        <td><%= number_to_currency(@calculator.down_payment, unit: 'RM') %> 
+        (<%= @calculator.property_price > 0 ? ((@calculator.down_payment / @calculator.property_price) * 100).round(2) : 0 %>%)</td>
+      </tr>
+      <tr>
+        <th>Loan Amount</th>
+        <td><%= number_to_currency(@calculator.property_price - @calculator.down_payment, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Interest Rate</th>
+        <td><%= @calculator.interest_rate %>%</td>
+      </tr>
+      <tr>
+        <th>Loan Term</th>
+        <td><%= @calculator.loan_term %> years</td>
+      </tr>
+      <tr>
+        <th>Holding Period</th>
+        <td><%= @calculator.holding_period %> years</td>
+      </tr>
+      <tr>
+        <th>Initial Investment</th>
+        <td><%= number_to_currency(@results[:initial_investment] || (@calculator.down_payment + @calculator.closing_costs.to_f + @calculator.renovation_costs.to_f), unit: 'RM') %></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Income Projections</h2>
+    <table>
+      <tr>
+        <th>Monthly Rental</th>
+        <td><%= number_to_currency(@calculator.monthly_rental, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Annual Rental Income</th>
+        <td><%= number_to_currency(@results[:annual_rental_income] || (@calculator.monthly_rental * 12 * (@calculator.occupancy_rate / 100.0)), unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Occupancy Rate</th>
+        <td><%= @calculator.occupancy_rate %>%</td>
+      </tr>
+      <tr>
+        <th>Other Income (Monthly)</th>
+        <td><%= number_to_currency(@calculator.other_income, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Total Annual Income</th>
+        <td><%= number_to_currency(@results[:total_annual_income] || 0, unit: 'RM') %></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Expense Projections</h2>
+    <table>
+      <tr>
+        <th>Monthly Mortgage Payment</th>
+        <td><%= number_to_currency(@results[:monthly_payment] || 0, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Annual Mortgage Payments</th>
+        <td><%= number_to_currency((@results[:monthly_payment] || 0) * 12, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Property Tax (Annual)</th>
+        <td><%= number_to_currency(@calculator.property_tax, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Insurance (Annual)</th>
+        <td><%= number_to_currency(@calculator.insurance, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Maintenance (Annual)</th>
+        <td><%= number_to_currency(@calculator.maintenance, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Management Fees (Annual)</th>
+        <td><%= number_to_currency(@calculator.management_fees, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Utilities (Annual)</th>
+        <td><%= number_to_currency(@calculator.utilities, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Other Expenses (Annual)</th>
+        <td><%= number_to_currency(@calculator.other_expenses, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Vacancy Cost (Annual)</th>
+        <td><%= number_to_currency(@results[:annual_vacancy_cost] || (@calculator.monthly_rental * 12 * (@calculator.vacancy_rate / 100.0)), unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Total Annual Expenses</th>
+        <td><%= number_to_currency(@results[:total_annual_expenses] || 0, unit: 'RM') %></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Cash Flow Analysis</h2>
+    <table>
+      <tr>
+        <th>Monthly Cash Flow</th>
+        <td class="<%= (@results[:monthly_cash_flow] || 0) < 0 ? 'negative' : '' %>">
+          <%= number_to_currency(@results[:monthly_cash_flow] || 0, unit: 'RM') %>
+        </td>
+      </tr>
+      <tr>
+        <th>Annual Cash Flow</th>
+        <td class="<%= (@results[:annual_cash_flow] || 0) < 0 ? 'negative' : '' %>">
+          <%= number_to_currency(@results[:annual_cash_flow] || 0, unit: 'RM') %>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Return Metrics</h2>
+    <table>
+      <tr>
+        <th>Cap Rate</th>
+        <td><%= (@results[:cap_rate] ? (@results[:cap_rate] * 100).round(2) : "N/A") %>%</td>
+      </tr>
+      <tr>
+        <th>Cash on Cash Return</th>
+        <td><%= (@results[:cash_on_cash_return] ? (@results[:cash_on_cash_return] * 100).round(2) : "N/A") %>%</td>
+      </tr>
+      <tr>
+        <th>Gross Rent Multiplier</th>
+        <td><%= @results[:gross_rent_multiplier] ? @results[:gross_rent_multiplier].round(2) : "N/A" %></td>
+      </tr>
+      <tr>
+        <th>Debt Service Coverage Ratio</th>
+        <td><%= @results[:dscr] ? @results[:dscr].round(2) : "N/A" %></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Exit Strategy (After <%= @calculator.holding_period %> Years)</h2>
+    <table>
+      <tr>
+        <th>Projected Property Value</th>
+        <td><%= number_to_currency(@results[:projected_property_value] || 0, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Remaining Mortgage Balance</th>
+        <td><%= number_to_currency(@results[:remaining_mortgage_balance] || 0, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Equity</th>
+        <td><%= number_to_currency(@results[:equity] || 0, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Total Profit (Equity + Cash Flow)</th>
+        <td><%= number_to_currency(@results[:total_profit] || 0, unit: 'RM') %></td>
+      </tr>
+      <tr>
+        <th>Return on Investment</th>
+        <td><%= (@results[:roi] ? (@results[:roi] * 100).round(2) : "N/A") %>%</td>
+      </tr>
+      <tr>
+        <th>Annualized ROI</th>
+        <td><%= (@results[:annualized_roi] ? (@results[:annualized_roi] * 100).round(2) : "N/A") %>%</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section summary">
+    <h2>Investment Summary</h2>
+    <p>Based on the provided data, this property investment is projected to generate:</p>
+    <ul>
+      <li>Monthly Cash Flow: <span class="<%= (@results[:monthly_cash_flow] || 0) < 0 ? 'negative' : 'highlight' %>"><%= number_to_currency(@results[:monthly_cash_flow] || 0, unit: 'RM') %></span></li>
+      <li>Cash on Cash Return: <span class="highlight"><%= (@results[:cash_on_cash_return] ? (@results[:cash_on_cash_return] * 100).round(2) : "N/A") %>%</span></li>
+      <li>Total ROI after <%= @calculator.holding_period %> years: <span class="highlight"><%= (@results[:roi] ? (@results[:roi] * 100).round(2) : "N/A") %>%</span></li>
+      <li>Annualized ROI: <span class="highlight"><%= (@results[:annualized_roi] ? (@results[:annualized_roi] * 100).round(2) : "N/A") %>%</span></li>
+    </ul>
+    <% 
+      monthly_cash_flow = @results[:monthly_cash_flow] || 0
+      cash_on_cash_return = @results[:cash_on_cash_return] || 0
+      roi = @results[:roi] || 0
+    %>
+    <% if monthly_cash_flow > 0 && cash_on_cash_return > 0.05 && roi > 0.2 %>
+      <p>This property appears to be a <strong>strong investment opportunity</strong> based on the projected returns.</p>
+    <% elsif monthly_cash_flow > 0 && cash_on_cash_return > 0.03 %>
+      <p>This property appears to be a <strong>moderate investment opportunity</strong> with positive cash flow.</p>
+    <% elsif monthly_cash_flow <= 0 && roi > 0.1 %>
+      <p>This property may be considered for <strong>appreciation potential</strong>, but has negative cash flow.</p>
+    <% else %>
+      <p>This property may present <strong>higher risk</strong> with lower returns than typically desired.</p>
+    <% end %>
+  </div>
+
+  <div class="footer">
+    <p>This report is generated for informational purposes only and does not constitute financial advice.</p>
+    <p>© <%= Time.now.year %> Malaysian Real Estate Suite</p>
+  </div>
+</body>
+</html>

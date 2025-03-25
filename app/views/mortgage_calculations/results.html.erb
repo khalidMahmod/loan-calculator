@@ -1,0 +1,236 @@
+<!-- app/views/mortgage_calculations/results.html.erb -->
+
+<div class="container-fluid p-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-orange-600"><i class="fas fa-money-bill-wave me-2"></i>Mortgage Calculation Results</h2>
+        <div class="btn-group">
+          <%= link_to mortgage_path, class: "btn btn-outline-secondary" do %>
+            <i class="fas fa-arrow-left me-1"></i> New Calculation
+          <% end %>
+          <%= link_to mortgage_export_pdf_path(mortgage_calculator: params[:mortgage_calculator].to_unsafe_h), class: "btn btn-outline-danger", data: { turbo_method: :post } do %>
+            <i class="far fa-file-pdf me-1"></i> Export PDF
+          <% end %>
+          <%= link_to mortgage_export_excel_path(mortgage_calculator: params[:mortgage_calculator].to_unsafe_h), class: "btn btn-outline-success", data: { turbo_method: :post } do %>
+            <i class="far fa-file-excel me-1"></i> Export Excel
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+          <div class="bg-orange-50 p-4 rounded-3 text-center h-100 shadow-sm">
+            <h5 class="text-orange-800 fw-semibold">Monthly Payment</h5>
+            <p class="fs-3 fw-bold text-orange-600">RM <%= number_with_precision(@results[:monthly_payment], precision: 2, delimiter: ',') %></p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="bg-orange-50 p-4 rounded-3 text-center h-100 shadow-sm">
+            <h5 class="text-orange-800 fw-semibold">Total Payments</h5>
+            <p class="fs-3 fw-bold text-orange-600">RM <%= number_with_precision(@results[:total_payment], precision: 2, delimiter: ',') %></p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="bg-orange-50 p-4 rounded-3 text-center h-100 shadow-sm">
+            <h5 class="text-orange-800 fw-semibold">Total <%= @calculator.bank_type == 'islamic' ? 'Profit' : 'Interest' %></h5>
+            <p class="fs-3 fw-bold text-orange-600">RM <%= number_with_precision(@results[:total_interest], precision: 2, delimiter: ',') %></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Cost Summary -->
+      <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+          <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+              <h6 class="text-orange-700 fw-medium">Stamp Duty</h6>
+              <p class="fs-5 fw-bold text-orange-600">RM <%= number_with_precision(@results[:stamp_duty], precision: 2, delimiter: ',') %></p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+              <h6 class="text-orange-700 fw-medium">Legal Fees</h6>
+              <p class="fs-5 fw-bold text-orange-600">RM <%= number_with_precision(@results[:legal_fees], precision: 2, delimiter: ',') %></p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card border-0 shadow-sm text-center h-100">
+            <div class="card-body">
+              <h6 class="text-orange-700 fw-medium">MRTA Premium (Est.)</h6>
+              <p class="fs-5 fw-bold text-orange-600">RM <%= number_with_precision(@results[:mrta_premium], precision: 2, delimiter: ',') %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom border-orange-200">
+              <h5 class="mb-0 text-orange-700 fw-semibold">Payment Breakdown</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="paymentBreakdownChart" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom border-orange-200">
+              <h5 class="mb-0 text-orange-700 fw-semibold"><%= @calculator.bank_type == 'islamic' ? 'Principal & Profit' : 'Principal & Interest' %> Over Time</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="amortizationChart" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Amortization Schedule -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom border-orange-200 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 text-orange-700 fw-semibold">Amortization Schedule</h5>
+          <button class="btn btn-sm btn-outline-orange" type="button" data-bs-toggle="collapse" data-bs-target="#amortizationSchedule">
+            <i class="fas fa-table me-1"></i> Show/Hide
+          </button>
+        </div>
+        <div class="collapse" id="amortizationSchedule">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped table-sm mb-0">
+                <thead class="bg-orange-50">
+                  <tr>
+                    <th>Payment #</th>
+                    <th>Payment Amount</th>
+                    <th>Principal</th>
+                    <th><%= @calculator.bank_type == 'islamic' ? 'Profit' : 'Interest' %></th>
+                    <th>Remaining Balance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @results[:amortization_schedule].each_with_index do |payment, index| %>
+                    <% if index < 12 || index % 12 == 0 || index >= @results[:amortization_schedule].length - 12 %>
+                      <tr>
+                        <td><%= payment[:payment_number] %></td>
+                        <td>RM <%= number_with_precision(payment[:payment_amount], precision: 2, delimiter: ',') %></td>
+                        <td>RM <%= number_with_precision(payment[:principal_payment], precision: 2, delimiter: ',') %></td>
+                        <td>RM <%= number_with_precision(@calculator.bank_type == 'islamic' ? payment[:profit_payment] : payment[:interest_payment], precision: 2, delimiter: ',') %></td>
+                        <td>RM <%= number_with_precision(payment[:remaining_balance], precision: 2, delimiter: ',') %></td>
+                      </tr>
+                    <% elsif index == 12 %>
+                      <tr><td colspan="5" class="text-center">...</td></tr>
+                    <% end %>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loan Summary -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom border-orange-200">
+          <h5 class="mb-0 text-orange-700 fw-semibold">Loan Summary</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <table class="table table-sm">
+                <tbody>
+                  <tr><th class="text-orange-700">Loan Amount</th><td class="text-end">RM <%= number_with_precision(@calculator.loan_amount, precision: 2, delimiter: ',') %></td></tr>
+                  <tr><th class="text-orange-700"><%= @calculator.bank_type == 'islamic' ? 'Profit' : 'Interest' %> Rate</th><td class="text-end"><%= number_to_percentage(@calculator.interest_rate, precision: 2) %></td></tr>
+                  <tr><th class="text-orange-700">Loan Term</th><td class="text-end"><%= @calculator.loan_term %> years</td></tr>
+                  <tr><th class="text-orange-700">Banking Type</th><td class="text-end"><%= @calculator.bank_type.capitalize %></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="col-md-6 mb-3">
+              <table class="table table-sm">
+                <tbody>
+                  <tr><th class="text-orange-700">Monthly Payment</th><td class="text-end">RM <%= number_with_precision(@results[:monthly_payment], precision: 2, delimiter: ',') %></td></tr>
+                  <tr><th class="text-orange-700">Total of All Payments</th><td class="text-end">RM <%= number_with_precision(@results[:total_payment], precision: 2, delimiter: ',') %></td></tr>
+                  <tr><th class="text-orange-700">Total <%= @calculator.bank_type == 'islamic' ? 'Profit' : 'Interest' %></th><td class="text-end">RM <%= number_with_precision(@results[:total_interest], precision: 2, delimiter: ',') %></td></tr>
+                  <tr><th class="text-orange-700"><%= @calculator.bank_type == 'islamic' ? 'Profit' : 'Interest' %>-to-Principal Ratio</th><td class="text-end"><%= number_to_percentage(@results[:total_interest] / @calculator.loan_amount, precision: 2) %></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const chartData = {
+    loanAmount: <%= @calculator.loan_amount %>,
+    totalInterest: <%= @results[:total_interest] %>,
+    paymentType: '<%= @calculator.bank_type == 'islamic' ? "Profit" : "Interest" %>',
+    amortization: <%= raw @results[:amortization_schedule].first(120).to_json %>
+  };
+</script>
+<script src="<%= asset_path('mortgage_charts.js') %>"></script>
+
+<style>
+  /* Custom color classes for the orange theme */
+  .bg-orange-50 {
+    background-color: #fff8f1;
+  }
+  
+  .bg-orange-100 {
+    background-color: #ffe8cc;
+  }
+  
+  .bg-orange-200 {
+    background-color: #ffd8a8;
+  }
+  
+  .bg-orange-600 {
+    background-color: #fd7e14;
+  }
+  
+  .text-orange-600 {
+    color: #fd7e14;
+  }
+  
+  .text-orange-700 {
+    color: #e76b08;
+  }
+  
+  .text-orange-800 {
+    color: #cc5803;
+  }
+  
+  .btn-orange-600 {
+    background-color: #fd7e14;
+    border-color: #fd7e14;
+  }
+  
+  .btn-orange-600:hover {
+    background-color: #e76b08;
+    border-color: #e76b08;
+  }
+  
+  .btn-outline-orange {
+    color: #fd7e14;
+    border-color: #fd7e14;
+  }
+  
+  .btn-outline-orange:hover {
+    color: #fff;
+    background-color: #fd7e14;
+    border-color: #fd7e14;
+  }
+  
+  .border-orange-200 {
+    border-color: #ffd8a8 !important;
+  }
+</style>

@@ -1,0 +1,202 @@
+<div class="container-fluid p-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-orange-600"><i class="fas fa-calculator me-2"></i>Affordability Analysis Results</h2>
+        <%= link_to affordability_path, class: "btn btn-outline-secondary" do %>
+          <i class="fas fa-arrow-left me-1"></i> New Calculation
+        <% end %>
+      </div>
+
+      <!-- Summary Metrics -->
+      <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+          <div class="bg-orange-50 p-4 rounded-3 text-center h-100 shadow-sm">
+            <h5 class="text-orange-800 fw-semibold">Maximum Affordable Property</h5>
+            <p class="fs-3 fw-bold text-orange-600">RM <%= number_with_precision(@results[:max_property_price], precision: 2, delimiter: ',') %></p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="bg-orange-50 p-4 rounded-3 text-center h-100 shadow-sm">
+            <h5 class="text-orange-800 fw-semibold">Maximum Loan Amount</h5>
+            <p class="fs-3 fw-bold text-orange-600">RM <%= number_with_precision(@results[:max_loan_amount], precision: 2, delimiter: ',') %></p>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="bg-orange-50 p-4 rounded-3 text-center h-100 shadow-sm">
+            <h5 class="text-orange-800 fw-semibold">Monthly Payment</h5>
+            <p class="fs-3 fw-bold text-orange-600">RM <%= number_with_precision(@results[:monthly_payment], precision: 2, delimiter: ',') %></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Details -->
+      <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom border-orange-200">
+              <h5 class="mb-0 text-orange-700 fw-semibold">Income & Expenses</h5>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm">
+                <tbody>
+                  <tr><th class="text-orange-700">Monthly Income</th><td class="text-end">RM <%= number_with_precision(@results[:income], precision: 2, delimiter: ',') %></td></tr>
+                  <tr><th class="text-orange-700">Monthly Debt Payments</th><td class="text-end">RM <%= number_with_precision(@results[:debts], precision: 2, delimiter: ',') %></td></tr>
+                  <tr><th class="text-orange-700">Monthly Expenses</th><td class="text-end">RM <%= number_with_precision(@results[:expenses] || 0, precision: 2, delimiter: ',') %></td></tr>
+                  <tr><th class="text-orange-700">Debt-to-Income Ratio</th><td class="text-end"><%= number_to_percentage(@results[:debt_to_income_ratio], precision: 2) %></td></tr>
+                  <tr><th class="text-orange-700">Available for Housing Payment</th><td class="text-end">RM <%= number_with_precision(@results[:available_for_housing], precision: 2, delimiter: ',') %></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom border-orange-200">
+              <h5 class="mb-0 text-orange-700 fw-semibold">Loan Details</h5>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm">
+                <tbody>
+                  <tr><th class="text-orange-700">Down Payment Amount</th><td class="text-end">RM <%= number_with_precision(@results[:down_payment_amount], precision: 2, delimiter: ',') %></td></tr>
+                  <tr><th class="text-orange-700">Down Payment Percentage</th><td class="text-end"><%= number_to_percentage(@results[:down_payment_percentage] || 10.0, precision: 2) %></td></tr>
+                  <tr><th class="text-orange-700">Interest Rate</th><td class="text-end"><%= number_to_percentage(@results[:interest_rate], precision: 2) %></td></tr>
+                  <tr><th class="text-orange-700">Loan Term</th><td class="text-end"><%= @results[:loan_term] || 30 %> years</td></tr>
+                  <tr><th class="text-orange-700">Estimated Taxes & Insurance</th><td class="text-end">RM <%= number_with_precision(@results[:monthly_taxes_insurance] || 0, precision: 2, delimiter: ',') %></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Explanation -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom border-orange-200">
+          <h5 class="mb-0 text-orange-700 fw-semibold">Understanding Your Results</h5>
+        </div>
+        <div class="card-body">
+          <p>
+            Based on your financial inputs, the maximum affordable property price is
+            <strong class="text-orange-700">RM <%= number_with_precision(@results[:max_property_price], precision: 2, delimiter: ',') %></strong>.
+            This is derived from:
+          </p>
+          <ul>
+            <li>Monthly income: RM <%= number_with_precision(@results[:income], precision: 2, delimiter: ',') %></li>
+            <li>Debt payments: RM <%= number_with_precision(@results[:debts], precision: 2, delimiter: ',') %></li>
+            <li>Down payment: <%= number_to_percentage(@results[:down_payment_percentage] || 10.0, precision: 2) %></li>
+            <li>Loan: <%= number_to_percentage(@results[:interest_rate], precision: 2) %> interest over <%= @results[:loan_term] || 30 %> years</li>
+          </ul>
+
+          <div class="alert bg-orange-50 border-start border-orange-600 border-3 mt-3">
+            <i class="fas fa-info-circle me-2 text-orange-600"></i>
+            <strong>Financial Health Note:</strong> Housing expenses should ideally be under 28% of your income. Total debt (including housing) under 36%.
+            <% if @results[:debt_to_income_ratio] > 36 %>
+              <div class="mt-2 text-danger"><strong>Caution:</strong> DTI exceeds 36%. Consider reducing debts.</div>
+            <% elsif @results[:debt_to_income_ratio] > 28 %>
+              <div class="mt-2 text-warning"><strong>Note:</strong> DTI is approaching limit. Borrow carefully.</div>
+            <% else %>
+              <div class="mt-2 text-orange-600"><strong>Good News:</strong> Your DTI is within recommended limits.</div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom border-orange-200">
+          <h5 class="mb-0 text-orange-700 fw-semibold">Affordability Bands</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="affordabilityChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('affordabilityChart').getContext('2d');
+    const max = <%= @results[:max_property_price] %>;
+    const comfortable = max * 0.8;
+    const conservative = max * 0.6;
+
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Conservative', 'Comfortable', 'Maximum'],
+        datasets: [{
+          label: 'Affordable Property Range (RM)',
+          data: [conservative, comfortable, max],
+          backgroundColor: ['rgba(253, 126, 20, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(231, 107, 8, 0.7)'],
+          borderColor: ['rgba(253, 126, 20, 1)', 'rgba(255, 193, 7, 1)', 'rgba(231, 107, 8, 1)'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return 'RM ' + context.raw.toLocaleString();
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return 'RM ' + value.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+  });
+</script>
+
+<style>
+  /* Custom color classes for the orange theme */
+  .bg-orange-50 {
+    background-color: #fff8f1;
+  }
+  
+  .bg-orange-100 {
+    background-color: #ffe8cc;
+  }
+  
+  .bg-orange-200 {
+    background-color: #ffd8a8;
+  }
+  
+  .bg-orange-600 {
+    background-color: #fd7e14;
+  }
+  
+  .text-orange-600 {
+    color: #fd7e14;
+  }
+  
+  .text-orange-700 {
+    color: #e76b08;
+  }
+  
+  .text-orange-800 {
+    color: #cc5803;
+  }
+  
+  .border-orange-200 {
+    border-color: #ffd8a8 !important;
+  }
+  
+  .border-orange-600 {
+    border-color: #fd7e14 !important;
+  }
+</style>

@@ -1,0 +1,420 @@
+<!-- app/views/property_roi_calculations/_styles.html.erb -->
+
+<style>
+  /* Progress indicator styles */
+  .tab-progress {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  
+  .tab-progress::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #f8f9fa;
+    z-index: 1;
+  }
+  
+  .progress-step {
+    position: relative;
+    z-index: 2;
+    background: white;
+    padding: 0 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .progress-step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .progress-step.active .progress-step-number {
+    background-color: #fd7e14;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
+  }
+  
+  .progress-step.completed .progress-step-number {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  /* Hide original form buttons container */
+  .form-buttons-container {
+    display: none !important;
+  }
+  
+  /* Modern toggle switch */
+  .currency-toggle-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .currency-toggle {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .currency-toggle-label {
+    position: relative;
+    display: flex;
+    width: 100px;
+    height: 36px;
+    background-color: #f8f9fa;
+    border-radius: 18px;
+    cursor: pointer;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+  
+  .currency-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50%;
+    height: 100%;
+    font-weight: 500;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    z-index: 1;
+  }
+  
+  .currency-option.active {
+    color: white;
+    font-weight: 600;
+  }
+  
+  .currency-toggle-label::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    background-color: #fd7e14;
+    border-radius: 18px;
+    transition: all 0.3s ease;
+  }
+  
+  .currency-toggle:checked + .currency-toggle-label::after {
+    left: 50%;
+  }
+  
+  .currency-toggle:checked + .currency-toggle-label .currency-myr {
+    color: #6c757d;
+    font-weight: 500;
+  }
+  
+  .currency-toggle:checked + .currency-toggle-label .currency-usd {
+    color: white;
+    font-weight: 600;
+  }
+  
+  /* Slider container */
+  .slider-container {
+    margin-top: 0.5rem;
+    padding: 0 5px;
+  }
+  
+  /* Custom range input */
+  .form-range {
+    height: 10px;
+  }
+  
+  .form-range::-webkit-slider-runnable-track {
+    background: #e9ecef;
+    border-radius: 5px;
+    height: 6px;
+  }
+  
+  .form-range::-webkit-slider-thumb {
+    background: #fd7e14;
+    border: 2px solid #fff;
+    height: 20px;
+    width: 20px;
+    margin-top: -7px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .form-range::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Button group for loan term */
+  .loan-term-toggle .btn-outline-orange {
+    color: #fd7e14;
+    border-color: #fd7e14;
+  }
+  
+  .loan-term-toggle .btn-check:checked + .btn-outline-orange {
+    background-color: #fd7e14;
+    color: white;
+    border-color: #fd7e14;
+  }
+  
+  /* Loan visualization */
+  .loan-progress {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Bootstrap overrides */
+  .bg-orange-50 { background-color: #fff8f1; }
+  .bg-orange-100 { background-color: #ffe9d4; }
+  .bg-orange-200 { background-color: #ffd5a8; }
+  .bg-orange-300 { background-color: #ffba76; }
+  .bg-orange-400 { background-color: #ff9e44; }
+  .bg-orange-500 { background-color: #fd7e14; }
+  .bg-orange-600 { background-color: #f0700a; }
+  .bg-orange-700 { background-color: #d35f00; }
+  .bg-orange-800 { background-color: #a94b00; }
+  
+  .text-orange-600 { color: #f0700a; }
+  .text-orange-700 { color: #d35f00; }
+  .text-orange-800 { color: #a94b00; }
+  
+  .border-orange-200 { border-color: #ffd5a8 !important; }
+  
+  .btn-orange-600 {
+    background-color: #f0700a;
+    border-color: #f0700a;
+  }
+  
+  .btn-orange-600:hover {
+    background-color: #d35f00;
+    border-color: #d35f00;
+  }
+  
+  .btn-outline-orange {
+    color: #f0700a;
+    border-color: #f0700a;
+  }
+  
+  .btn-outline-orange:hover, .btn-outline-orange.active {
+    color: #fff;
+    background-color: #f0700a;
+    border-color: #f0700a;
+  }
+  
+  /* Card styles */
+  .card {
+    border-radius: 0.8rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+  }
+  
+  .card:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Input group */
+  .input-group .form-control, .input-group .input-group-text {
+    border-radius: 0.5rem;
+  }
+  
+  .input-group > :not(:first-child):not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) {
+    margin-left: -1px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  
+  .input-group:not(.has-validation) > :not(:last-child):not(.dropdown-toggle):not(.dropdown-menu),
+  .input-group:not(.has-validation) > .dropdown-toggle:nth-last-child(n+3) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  
+  /* Metric cards */
+  .metric-card {
+    background-color: #fff;
+    border-radius: 0.6rem;
+    padding: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s ease;
+    border: 1px solid #f3f3f3;
+  }
+  
+  .metric-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+  
+  .metric-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #fff8f1;
+    color: #fd7e14;
+  }
+  
+  /* Badge styles */
+  .badge {
+    font-weight: 500;
+    padding: 0.3em 0.6em;
+    border-radius: 0.4rem;
+  }
+  
+  /* ROI gauge styles */
+  .roi-gauge {
+    position: relative;
+    height: 80px;
+    width: 100%;
+  }
+  
+  .gauge-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #495057;
+  }
+  
+  /* Cash flow indicator */
+  .cash-flow-indicator {
+    text-align: center;
+    position: relative;
+    height: 80px;
+  }
+  
+  .cash-flow-icon {
+    font-size: 2rem;
+    color: #fd7e14;
+    opacity: 0.8;
+  }
+  
+  .cash-flow-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #495057;
+  }
+  
+  /* Growth arrow */
+  .growth-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+  }
+  
+  /* Summary divider */
+  .summary-divider {
+    height: 1px;
+    background-color: #f1f1f1;
+    margin: 10px 0;
+  }
+  
+  /* Toggle buttons */
+  .chart-toggle-container, .toggle-detailed-metrics {
+    transition: all 0.2s ease;
+  }
+  
+  /* Occupancy visualization */
+  .occupancy-units {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+  
+  .unit-box {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    margin: 1px;
+    transition: all 0.3s ease;
+  }
+  
+  .unit-occupied {
+    background-color: #fd7e14;
+  }
+  
+  .unit-vacant {
+    background-color: #e9ecef;
+  }
+  
+  /* Breakdown badge */
+  .breakdown-badge {
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+  }
+  
+  /* Chart buttons */
+  .investment-breakdown-btn, .income-breakdown-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff8f1;
+    color: #fd7e14;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .investment-breakdown-btn:hover, .income-breakdown-btn:hover {
+    background-color: #fd7e14;
+    color: white;
+  }
+  
+  /* Transitions */
+  .tab-pane {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .loan-term-toggle .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+    }
+    
+    .progress-step-number {
+      width: 28px;
+      height: 28px;
+      font-size: 0.8rem;
+    }
+    
+    .metric-card {
+      margin-bottom: 1rem;
+    }
+    
+    .gauge-value, .cash-flow-value {
+      font-size: 1rem;
+    }
+  }
+</style>
