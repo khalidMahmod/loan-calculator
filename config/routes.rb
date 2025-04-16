@@ -17,8 +17,13 @@ get 'property-roi/export-excel', to: 'property_roi_calculations#export_excel', a
 
   # Mortgage Calculator
   get 'mortgage', to: 'mortgage_calculations#new'
-  post 'mortgage/calculate', to: 'mortgage_calculations#calculate'
+  post 'mortgage/calculate', to: 'loan_calculations#mortgage_calculate'
   post 'mortgage/export-pdf', to: 'mortgage_calculations#export_pdf'
   post 'mortgage/export-excel', to: 'mortgage_calculations#export_excel'
   post 'mortgage/amortization-schedule', to: 'mortgage_calculations#amortization_schedule'
+
+  post 'loan_calculator/eligibility', to: 'loan_calculations#eligibility'
+  post 'loan_calculator/mortgage', to: 'loan_calculations#mortgage'
+  post 'loan_calculator/rental_yield', to: 'loan_calculations#rental_yield'
+  post 'loan_calculator/down_payment_plan', to: 'loan_calculations#down_payment_plan'
 end
