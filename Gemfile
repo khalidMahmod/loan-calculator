@@ -29,7 +29,7 @@ gem 'monetize'
 gem 'money-rails'
 
 # UI Components
-gem 'bootstrap', '~> 5.2.0'
+gem 'bootstrap', '~> 5.3.5'
 gem 'jquery-rails'
 gem 'font-awesome-rails'
 
